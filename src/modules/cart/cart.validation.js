@@ -35,7 +35,19 @@ exports.addToCartValidation = [
   body('productType')
     .optional()
     .isIn(['medication', 'doctors_note', 'other'])
-    .withMessage('Product type must be medication, doctors_note, or other')
+    .withMessage('Product type must be medication, doctors_note, or other'),
+
+  body('pharmacy').optional().isString().withMessage('pharmacy must be a string'),
+
+  body('dosageOption').optional().isObject().withMessage('dosageOption must be an object'),
+  body('dosageOption.name').optional().isString(),
+  body('dosageOption.priceAdjustment').optional().isNumeric(),
+
+  body('quantityOption').optional().isObject().withMessage('quantityOption must be an object'),
+  body('quantityOption.name').optional().isString(),
+  body('quantityOption.priceAdjustment').optional().isNumeric(),
+
+  body('isRefillEnabled').optional().isBoolean().withMessage('isRefillEnabled must be a boolean')
 ];
 
 // Apply coupon validation

@@ -53,7 +53,7 @@ exports.saveMedicalQuestions = async (req, res, next) => {
 // Submit consultation (book consultation)
 exports.submitConsultation = async (req, res, next) => {
   try {
-    const form = await intakeFormService.submitConsultation(req.user.id);
+    const form = await intakeFormService.submitConsultation(req.user.id, req.body.doctorId);
 
     const message = 'Consultation submitted successfully. Your consultation request has been sent to the doctor.';
 

@@ -101,11 +101,14 @@ exports.addToCart = async (userId, data) => {
   const patient = await getPatient(userId, { lean: false });
   const cart = await getOrCreateCart(patient._id);
 
-  const { productId, productName, productImage, productType, quantity, unitPrice } = data;
-  
-  // Check if item already exists
+  const { productId, productName, productImage, productType, quantity, unitPrice, dosageOption, quantityOption, isRefillEnabled, pharmacy } = data;
+
+  // Check if item already exists (same product + same dosage + same quantity option = same item)
   const existingItemIndex = cart.items.findIndex(
-    item => item.productId === productId && item.productType === productType
+    item => item.productId === productId &&
+            item.productType === productType &&
+            item.dosageOption?._id === dosageOption?._id &&
+            item.quantityOption?._id === quantityOption?._id
   );
 
   if (existingItemIndex !== -1) {
@@ -123,7 +126,11 @@ exports.addToCart = async (userId, data) => {
       productType: productType || 'medication',
       quantity: quantity || 1,
       unitPrice,
-      totalPrice
+      totalPrice,
+      pharmacy,
+      dosageOption,
+      quantityOption,
+      isRefillEnabled: isRefillEnabled || false
     });
   }
 

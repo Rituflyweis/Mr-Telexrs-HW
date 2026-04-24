@@ -235,7 +235,7 @@ exports.saveMedicalQuestions = async (userId, data) => {
 };
 
 // Submit consultation (book consultation)
-exports.submitConsultation = async (userId) => {
+exports.submitConsultation = async (userId, doctorId) => {
   const patient = await getPatient(userId);
   const intakeForm = await IntakeForm.findOne({ patient: patient._id });
 
@@ -244,12 +244,14 @@ exports.submitConsultation = async (userId) => {
   }
 
   // Validate and verify doctor ID if provided (optional)
-  const doctor = await Doctor.findById({ _id: patient.user.doctorId });
-  if (!doctor) {
-    throw new AppError('Doctor not found.', 404);
-  }
-  if (!doctor.isActive || doctor.status !== 'active') {
-    throw new AppError('Selected doctor is not available for consultations.', 400);
+  if (doctorId) {
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) {
+      throw new AppError('Doctor not found.', 404);
+    }
+    if (!doctor.isActive || doctor.status !== 'active') {
+      throw new AppError('Selected doctor is not available for consultations.', 400);
+    }
   }
 
   const isComplete =

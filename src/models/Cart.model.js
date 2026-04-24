@@ -29,6 +29,23 @@ const cartItemSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  pharmacy: {
+    type: String
+  },
+  dosageOption: {
+    name: String,
+    priceAdjustment: Number,
+    _id: String
+  },
+  quantityOption: {
+    name: String,
+    priceAdjustment: Number,
+    _id: String
+  },
+  isRefillEnabled: {
+    type: Boolean,
+    default: false
+  },
   isSaved: {
     type: Boolean,
     default: false
