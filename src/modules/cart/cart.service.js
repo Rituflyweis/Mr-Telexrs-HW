@@ -101,7 +101,7 @@ exports.addToCart = async (userId, data) => {
   const patient = await getPatient(userId, { lean: false });
   const cart = await getOrCreateCart(patient._id);
 
-  const { productId, productName, productImage, productType, quantity, unitPrice, dosageOption, quantityOption, isRefillEnabled, pharmacy } = data;
+  const { productId, productName, productImage, productType, quantity, unitPrice, dosageOption, quantityOption, isRefillEnabled, pharmacy, condition, symptoms } = data;
 
   // Check if item already exists (same product + same dosage + same quantity option = same item)
   const existingItemIndex = cart.items.findIndex(
@@ -128,6 +128,8 @@ exports.addToCart = async (userId, data) => {
       unitPrice,
       totalPrice,
       pharmacy,
+      condition,
+      symptoms,
       dosageOption,
       quantityOption,
       isRefillEnabled: isRefillEnabled || false

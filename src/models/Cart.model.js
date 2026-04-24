@@ -32,6 +32,13 @@ const cartItemSchema = new mongoose.Schema({
   pharmacy: {
     type: String
   },
+  condition: {
+    type: String
+  },
+  symptoms: {
+    type: [String],
+    default: []
+  },
   dosageOption: {
     name: String,
     priceAdjustment: Number,

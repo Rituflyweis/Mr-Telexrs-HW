@@ -152,9 +152,26 @@ exports.getConsultationsByDoctorId = async (doctorId, query = {}) => {
   console.log("----------------------151--------------", consultations);
 
   const formattedConsultations = await Promise.all(consultations.map(async form => {
-    const order = await Order.findOne({ patient: form.patient._id, status: 'pending' }, { _id: 1, status: 1, hw_order_id: 1, doctorApproved: 1 });
+    const order = await Order.findOne(
+      { patient: form.patient._id, status: 'pending' },
+      {
+        _id: 1,
+        status: 1,
+        hw_order_id: 1,
+        doctorApproved: 1,
+        'items.medicationName': 1,
+        'items.dosage': 1,
+        'items.dosageOption': 1,
+        'items.quantityOption': 1
+      }
+    );
     const formatted = formatConsultation(form);
     formatted.order = order;
+    formatted.medicines = order?.items?.map(item => ({
+      name: item.medicationName,
+      dosage: item.dosage || item.dosageOption?.name || null,
+      quantity: item.quantityOption?.name || null
+    })) || [];
     if (form.doctor) {
       formatted.doctor = {
         id: form.doctor._id,

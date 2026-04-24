@@ -1184,9 +1184,15 @@ exports.createOrderByDoctor = async (doctorId, orderId) => {
     throw new AppError(`User not found for patient ${patient._id}`, 404);
   }
 
-  // Check if HW customer exists
+  // Auto-sync HW customer if missing — use order's shipping address
   if (!patient.hw_customer_id) {
-    throw new AppError('Customer not synced with pharmacy. Please add address first.', 400);
+    const addrData = order.shippingAddress || await Address.findOne({ patient: patient._id }).lean();
+    if (!addrData) {
+      throw new AppError('Customer not synced with pharmacy. Please add address first.', 400);
+    }
+    const syncResult = await HWHelper.createCustomer(user, patient, addrData);
+    patient.hw_customer_id = syncResult.hw_customer_id;
+    await patient.save();
   }
 
   // Create patient in HW if not exists
@@ -1258,8 +1264,15 @@ exports.createPrescriptionOrderByDoctor = async (doctorId, data) => {
   let patient = order.patient;
   const user = await User.findById(patient.user);
 
+  // Auto-sync HW customer if missing — use order's shipping address
   if (!patient.hw_customer_id) {
-    throw new AppError('Customer not synced with pharmacy. Please add address first.', 400);
+    const addrData = order.shippingAddress || await Address.findOne({ patient: patient._id }).lean();
+    if (!addrData) {
+      throw new AppError('Customer not synced with pharmacy. Please add address first.', 400);
+    }
+    const syncResult = await HWHelper.createCustomer(user, patient, addrData);
+    patient.hw_customer_id = syncResult.hw_customer_id;
+    await patient.save();
   }
 
   // Create patient in HW if not exists
@@ -1268,7 +1281,6 @@ exports.createPrescriptionOrderByDoctor = async (doctorId, data) => {
     patient.hw_patient_id = newPatient.hw_patient_id;
     await patient.save();
   }
-
 
   // Prepare addresses
   const addresses = {

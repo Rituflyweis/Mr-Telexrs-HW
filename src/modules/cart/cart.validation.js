@@ -39,6 +39,10 @@ exports.addToCartValidation = [
 
   body('pharmacy').optional().isString().withMessage('pharmacy must be a string'),
 
+  body('condition').optional().isString().withMessage('condition must be a string'),
+  body('symptoms').optional().isArray().withMessage('symptoms must be an array'),
+  body('symptoms.*').optional().isString().withMessage('each symptom must be a string'),
+
   body('dosageOption').optional().isObject().withMessage('dosageOption must be an object'),
   body('dosageOption.name').optional().isString(),
   body('dosageOption.priceAdjustment').optional().isNumeric(),
