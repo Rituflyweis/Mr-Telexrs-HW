@@ -146,9 +146,9 @@ const createCustomer = async (user, patient, addressData) => {
     address2: addressData.addressLine2 || '',
     city: addressData.city,
     state: addressData.state,
-    country: addressData.country || 'US',
+    country: (addressData.country || 'US').replace(/^USA$/i, 'US'),
     postal_code: addressData.postalCode,
-    phone: addressData.phone,
+    phone: addressData.phone || addressData.phoneNumber || '',
     phone_evening: addressData.phoneEvening || '',
     fax: addressData.fax || '',
     label: 'Home Address'

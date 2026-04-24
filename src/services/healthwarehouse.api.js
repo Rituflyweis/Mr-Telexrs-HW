@@ -112,8 +112,11 @@ const createOrder = (orderData) => {
             return response.data;
         })
         .catch((error) => {
-            console.error('Create Order Error:', error.response?.data || error.message);
-            throw error;
+            const hwError = error.response?.data;
+            console.error('Create Order Error:', hwError || error.message);
+            const err = new Error(JSON.stringify(hwError) || error.message);
+            err.status = error.response?.status;
+            throw err;
         });
 };
 

@@ -73,7 +73,7 @@ exports.getAllConsultations = async (query = {}) => {
       select: 'user specialty',
       populate: { path: 'user', select: 'firstName lastName' }
     })
-    .sort({ createdAt: -1 })
+    .sort({ updatedAt: -1 })
     .skip(skip)
     .limit(limit)
     .lean();
@@ -145,7 +145,7 @@ exports.getConsultationsByDoctorId = async (doctorId, query = {}) => {
     .populate({
       path: 'doctor',
     })
-    .sort({ createdAt: -1 })
+    .sort({ updatedAt: -1 })
     .skip(skip)
     .limit(limit)
     .lean();
