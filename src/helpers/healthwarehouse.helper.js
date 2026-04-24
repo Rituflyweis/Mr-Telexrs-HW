@@ -389,12 +389,6 @@ const buildPrescriptionOrderPayload = (order, patient, user, addresses, prescrip
 
   // Build line items with prescription info
   const lineItems = order.items.map((item, index) => {
-    const hwProductId = parseInt(item.productId);
-
-    if (!hwProductId) {
-      throw new Error(`No HW product ID for: ${item.medicationName}`);
-    }
-
     // Create line item with prescription details
     const lineItem = {
       product_id: 101,
