@@ -2,22 +2,28 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, '../../uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+const isProduction = process.env.NODE_ENV === 'production';
 
-// Configure storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+let storage;
+if (isProduction) {
+  // Vercel/Lambda: no writable filesystem — keep files in memory.
+  // Upload to cloud storage (S3/Cloudinary) in route handlers via req.file.buffer.
+  storage = multer.memoryStorage();
+} else {
+  const uploadsDir = path.join(__dirname, '../../uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
   }
-});
+  storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, uploadsDir);
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+  });
+}
 
 // File filter for images
 const fileFilter = (req, file, cb) => {
@@ -79,9 +85,10 @@ exports.uploadDoctorFiles = upload.fields([
   { name: 'medicalLicense', maxCount: 1 }
 ]);
 
-// Helper to get file URL
+// Helper to get file URL (only meaningful in dev with disk storage)
 exports.getFileUrl = (req, filename) => {
   if (!filename) return null;
+  if (isProduction) return filename; // production: caller stores the cloud URL directly
   const baseUrl = req.protocol + '://' + req.get('host');
   return `${baseUrl}/uploads/${filename}`;
 };
