@@ -1119,7 +1119,7 @@ exports.getOrdersForDoctor = async (doctorId, query = {}) => {
       })
       .populate('prescription', 'medications status createdAt')
       .populate('payment', 'status amount method')
-      .populate('patient')
+      .populate('patient', 'user gender dateOfBirth bloodGroup height weight allergies medicalHistory profilePicture hw_customer_id hw_patient_id')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
