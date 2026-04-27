@@ -17,35 +17,21 @@ const prescriptionSchema = new mongoose.Schema(
       ref: 'Doctor',
       required: false // Optional - can be added later
     },
-    medicine: {
-      type: String,
-      trim: true
-    },
-    duration: {
-      type: String,
-      trim: true
-    },
-    frequency: {
-      type: String,
-      trim: true
-    },
-    refillsAllowed: {
-      type: String,
-      trim: true
-    },
+    medications: [
+      {
+        name: { type: String, trim: true },
+        brand: { type: String, trim: true },
+        description: { type: String, trim: true },
+        duration: { type: String, trim: true },
+        frequency: { type: String, trim: true },
+        refillsAllowed: { type: String, trim: true }
+      }
+    ],
     instruction: {
       type: String,
       trim: true
     },
     warning: {
-      type: String,
-      trim: true
-    },
-    brand: {
-      type: String,
-      trim: true
-    },
-    description: {
       type: String,
       trim: true
     },

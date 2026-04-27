@@ -1374,12 +1374,23 @@ exports.createPrescriptionOrderByDoctor = async (doctorId, data) => {
     doctorInfo
   );
 
-  // Update order with HW IDs
+  // Save prescription to DB and link to order
+  const prescription = await Prescription.create({
+    patient: patient._id,
+    doctor: (await Doctor.findOne({ user: doctorId }))?._id,
+    medications: prescriptionData.medicines || [],
+    instruction: prescriptionData.instruction || '',
+    warning: prescriptionData.warning || '',
+    status: 'active',
+    isOrdered: true
+  });
+
+  // Update order with HW IDs and prescription reference
   order.hw_order_id = hwResult.hw_order_id;
   order.status = 'confirmed';
-  // order.status = 'sent_to_pharmacy';
   order.prescription_sent_at = new Date();
   order.doctorApproved = true;
+  order.prescription = prescription._id;
 
   if (hwResult.hw_split_order_id) {
     order.hw_split_order_id = hwResult.hw_split_order_id;
