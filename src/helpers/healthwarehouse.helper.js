@@ -374,69 +374,87 @@ const createOrder = async (order, patient, addresses) => {
   return result;
 };
 
+const parseRefills = (refillsAllowed) => {
+  if (!refillsAllowed) return 0;
+  if (typeof refillsAllowed === 'number') return refillsAllowed;
+  const lower = refillsAllowed.toLowerCase();
+  if (lower.includes('no') || lower === '0') return 0;
+  const match = lower.match(/\d+/);
+  return match ? parseInt(match[0], 10) : 0;
+};
+
 const buildPrescriptionOrderPayload = (order, patient, user, addresses, prescriptionData, doctor) => {
   const shippingAddress = addresses?.shippingAddress || order.shippingAddress;
-  const billingAddress = addresses?.billingAddress || order.billingAddress;
 
   const shippingAddressId = shippingAddress?.hw_address_id;
   const billingAddressId = shippingAddress?.hw_address_id;
 
-  console.log('Shipping_address_id', shippingAddressId)
+  console.log('Shipping_address_id', shippingAddressId);
 
   if (!shippingAddressId) {
     throw new Error('Shipping address not synced with pharmacy');
   }
 
-  // Build line items with prescription info
+  const medicines = prescriptionData.medicines || [];
+  const commonInstruction = prescriptionData.instruction || order.notes || 'As directed';
+  const commonWarning = prescriptionData.warning || '';
+  const comments = [commonInstruction, commonWarning].filter(Boolean).join(' | ');
+
+  const patientInfo = {
+    prefix: prescriptionData.patientInfo?.prefix || '',
+    first_name: user.firstName,
+    middle_name: prescriptionData.patientInfo?.middleName || '',
+    last_name: user.lastName,
+    suffix: prescriptionData.patientInfo?.suffix || '',
+    address1: prescriptionData.patientInfo?.address1 || shippingAddress.addressLine1,
+    address2: prescriptionData.patientInfo?.address2 || shippingAddress.addressLine2 || '',
+    city: prescriptionData.patientInfo?.city || shippingAddress.city,
+    state: prescriptionData.patientInfo?.state || shippingAddress.state,
+    country: prescriptionData.patientInfo?.country || 'US',
+    postal_code: prescriptionData.patientInfo?.postalCode || shippingAddress.postalCode,
+    dob: prescriptionData.patientInfo?.dob || patient.dateOfBirth
+  };
+
+  const prescriberInfo = {
+    first_name: doctor?.firstName || '',
+    last_name: doctor?.lastName || '',
+    address: doctor?.address || '126',
+    city: doctor?.city || 'New York',
+    state: doctor?.state || 'NY',
+    postal_code: doctor?.postalCode || '10004',
+    phone: prescriptionData.prescriber?.phone || doctor?.phone,
+    fax: doctor?.fax || '555-555-8888',
+    npi_number: doctor?.npiNumber || '0000000000',
+    license_number: doctor?.licenseNumber || '123456',
+    dea_number: doctor?.deaNumber || 'AA1234560'
+  };
+
+  // Match each order item to its corresponding medicine by index
   const lineItems = order.items.map((item, index) => {
-    // Create line item with prescription details
+    const med = medicines[index] || {};
+
     const lineItem = {
       product_id: 101,
       qty: item.quantity,
-      product_name: item.medicationName || prescriptionData.medication.name,
+      product_name: med.name || item.medicationName,
     };
 
-    // Add prescription object (only for new prescriptions)
-    if (prescriptionData && prescriptionData.isNewPrescription) {
+    if (prescriptionData.isNewPrescription) {
       lineItem.prescription = {
-        patient_info: {
-          prefix: prescriptionData.patientInfo?.prefix || '',
-          first_name: user.firstName,
-          middle_name: prescriptionData.patientInfo?.middleName || '',
-          last_name: user.lastName,
-          suffix: prescriptionData.patientInfo?.suffix || '',
-          address1: prescriptionData.patientInfo?.address1 || shippingAddress.addressLine1,
-          address2: prescriptionData.patientInfo?.address2 || shippingAddress.addressLine2 || '',
-          city: prescriptionData.patientInfo?.city || shippingAddress.city,
-          state: prescriptionData.patientInfo?.state || shippingAddress.state,
-          country: prescriptionData.patientInfo?.country || 'US',
-          postal_code: prescriptionData.patientInfo?.postalCode || shippingAddress.postalCode,
-          dob: prescriptionData.patientInfo?.dob || patient.dateOfBirth
-        },
+        patient_info: patientInfo,
         medication: {
-          name: prescriptionData.medicine || item.medicationName,
+          name: med.name || item.medicationName,
           quantity: item.quantity,
-          refills: prescriptionData?.refills || 0,
-          directions: prescriptionData.instruction || item.directions || 'As directed',
+          refills: parseRefills(med.refillsAllowed),
+          directions: commonInstruction,
           sig_code: prescriptionData?.sigCode || '',
           daw: prescriptionData?.daw || false,
-          units_dose: prescriptionData.description || '',
-          dose_frequency: prescriptionData.frequency || ''
+          units_dose: med.description || '',
+          dose_frequency: med.frequency || '',
+          duration: med.duration || ''
         },
-        prescriber: {
-          first_name: doctor?.firstName || '',
-          last_name: doctor?.lastName || '',
-          address: doctor?.address || '126',
-          city: doctor?.city || 'New York',
-          state: doctor?.state || 'NY',
-          postal_code: doctor?.postalCode || '10004',
-          phone: prescriptionData.prescriber?.phone || doctor?.phone,
-          fax: doctor?.fax || '555-555-8888',
-          npi_number: doctor?.npiNumber || '0000000000',
-          license_number: doctor?.licenseNumber || '123456',
-          dea_number: doctor?.deaNumber || 'AA1234560'
-        },
-        comments_instructions: prescriptionData.instruction || order.notes || ''
+        prescriber: prescriberInfo,
+        comments_instructions: comments
       };
     }
 
@@ -452,12 +470,6 @@ const buildPrescriptionOrderPayload = (order, patient, user, addresses, prescrip
       order_comment: order.notes || `TelRxs Prescription Order #${order.orderNumber}`,
       shipping_method: mapShippingMethod(order.shippingMethod || 'standard'),
       line_items: lineItems,
-      // metadata: {
-      //     partner_order_id: order._id.toString(),
-      //     telrxs_order_number: order.orderNumber,
-      //     telrxs_patient_id: patient._id.toString(),
-      //     is_new_prescription: true
-      // }
     }
   };
 };
@@ -488,8 +500,8 @@ const createOrderWithNewPrescription = async (order, patient, user, addresses, p
     throw new Error('Prescriber phone number is required');
   }
 
-  if (!prescriptionData.medicine) {
-    throw new Error('Medication name is required');
+  if (!prescriptionData.medicines || !Array.isArray(prescriptionData.medicines) || prescriptionData.medicines.length === 0) {
+    throw new Error('At least one medication is required');
   }
 
   // Build payload with prescription
