@@ -268,12 +268,11 @@ exports.submitConsultation = async (userId, doctorId) => {
     throw new AppError('Consultation has already been submitted.', 400);
   }
 
-  // Update status to submitted and assign doctor (if provided)
+  // Update status to submitted and assign doctor
   intakeForm.status = 'submitted';
-  if (doctorId) {
-    intakeForm.doctor = doctorId;
-  }
-  // If doctorId is not provided, doctor field remains null/unchanged
+  intakeForm.doctor = doctorId
+    ? new mongoose.Types.ObjectId(doctorId)
+    : new mongoose.Types.ObjectId('69611415b8c266a7835c0c1a');
   await intakeForm.save();
 
   // Populate doctor information before returning
