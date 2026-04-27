@@ -1149,10 +1149,36 @@ exports.getOrdersForDoctor = async (doctorId, query = {}) => {
 
   // Batch populate medicines
   const ordersWithProducts = await batchPopulateMedicines(orders);
+
+  // Fetch intake forms for all unique patients and merge medicationAllergies
+  const patientIds = [...new Set(orders.map(o => o.patient?._id?.toString()).filter(Boolean))];
+  const intakeForms = await IntakeFormModel.find(
+    { patient: { $in: patientIds } },
+    { patient: 1, 'medicalQuestions.medicationAllergies': 1, 'medicalQuestions.pastMedicalHistory': 1 }
+  ).lean();
+
+  const intakeMap = {};
+  intakeForms.forEach(f => {
+    intakeMap[f.patient.toString()] = f.medicalQuestions || {};
+  });
+
+  const ordersWithAllergies = ordersWithProducts.map(order => {
+    const patientId = order.patient?._id?.toString();
+    const intake = intakeMap[patientId] || {};
+    return {
+      ...order,
+      patient: {
+        ...order.patient,
+        allergies: intake.medicationAllergies || order.patient?.allergies || [],
+        medicalHistory: intake.pastMedicalHistory || order.patient?.medicalHistory || []
+      }
+    };
+  });
+
   console.log(statusCountsMap)
 
   return {
-    orders: ordersWithProducts,
+    orders: ordersWithAllergies,
     totalCount: total,
     statusCounts: statusCountsMap,
     pagination: buildPaginationResponse(total, page, limit)
