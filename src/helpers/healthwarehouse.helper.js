@@ -520,7 +520,16 @@ const getOrderTracking = async (hwOrderId) => {
   try {
     // First, get order status
     const orderData = await HW.getOrder(hwOrderId);
-    const orderStatus = orderData.order?.status;
+    const orderStatus = orderData?.order?.status;
+
+    if (!orderStatus) {
+      const details = orderData ? JSON.stringify(orderData) : null;
+      throw new Error(
+        details
+          ? `Unable to fetch HealthWarehouse order status for order ${hwOrderId}: ${details}`
+          : `Unable to fetch HealthWarehouse order status for order ${hwOrderId}`
+      );
+    }
 
     // Check if order is still processing (no shipment yet)
     const isProcessing = ['processing', 'transfer_success', 'transfer_failure'].includes(orderStatus);
@@ -536,7 +545,7 @@ const getOrderTracking = async (hwOrderId) => {
       try {
         const shipmentsData = await HW.getShipments(hwOrderId);
         shipments = shipmentsData?.shipments?.shipments || [];
-        trackingNumber = shipments[0].tracking_number;
+        trackingNumber = shipments[0]?.tracking_number || null;
 
         trackingInfo = shipments.map(shipment => ({
           tracking_number: shipment.tracking_number,
@@ -546,8 +555,13 @@ const getOrderTracking = async (hwOrderId) => {
           status: shipment.status
         }));
       } catch (error) {
-        // It's okay if shipments not found - order might be processing
-        console.log(`No shipments found for order ${hwOrderId} (still processing)`);
+        const statusCode = error?.statusCode || error?.status;
+        if (statusCode === 404) {
+          // It's okay if shipments not found - order might still be processing
+          console.log(`No shipments found for order ${hwOrderId} (still processing)`);
+        } else {
+          throw error;
+        }
       }
     }
 

@@ -153,7 +153,7 @@ exports.getConsultationsByDoctorId = async (doctorId, query = {}) => {
 
   const formattedConsultations = await Promise.all(consultations.map(async form => {
     const order = await Order.findOne(
-      { patient: form.patient._id, status: 'pending' },
+      { patient: form.patient._id },
       {
         _id: 1,
         status: 1,
@@ -164,7 +164,7 @@ exports.getConsultationsByDoctorId = async (doctorId, query = {}) => {
         'items.dosageOption': 1,
         'items.quantityOption': 1
       }
-    );
+    ).sort({ createdAt: -1 });
     const formatted = formatConsultation(form);
     formatted.order = order;
     formatted.medicines = order?.items?.map(item => ({

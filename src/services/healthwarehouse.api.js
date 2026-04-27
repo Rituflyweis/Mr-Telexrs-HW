@@ -11,6 +11,19 @@ const client = axios.create({
     }
 });
 
+const createHWApiError = (error, context) => {
+    const hwError = error.response?.data;
+    const message = typeof hwError === 'string'
+        ? hwError
+        : JSON.stringify(hwError || error.message);
+    const err = new Error(message || error.message);
+    const statusCode = error.response?.status;
+    err.status = statusCode;
+    err.statusCode = statusCode;
+    err.context = context;
+    return err;
+};
+
 // ============ CUSTOMER APIs ============
 
 
@@ -114,9 +127,7 @@ const createOrder = (orderData) => {
         .catch((error) => {
             const hwError = error.response?.data;
             console.error('Create Order Error:', hwError || error.message);
-            const err = new Error(JSON.stringify(hwError) || error.message);
-            err.status = error.response?.status;
-            throw err;
+            throw createHWApiError(error, 'createOrder');
         });
 };
 
@@ -131,7 +142,7 @@ const getOrder = (orderId) => {
         })
         .catch((error) => {
             console.error('Get Order Error:', error.response?.data || error.message);
-            // throw error;
+            throw createHWApiError(error, 'getOrder');
         });
 };
 
@@ -160,7 +171,7 @@ const getShipments = (orderId) => {
         })
         .catch((error) => {
             console.error('Get Shipments Error:', error.response?.data || error.message);
-            //  throw error;
+            throw createHWApiError(error, 'getShipments');
         });
 };
 
