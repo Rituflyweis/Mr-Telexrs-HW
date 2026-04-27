@@ -1,6 +1,6 @@
 const config = {
     // API Configuration
-    baseURL: process.env.HW_API_URL || 'https://partners.healthwarehouse.com/v1',
+    baseURL: process.env.HW_API_URL || 'https://partners-test.healthwarehouse.com/v1',
     apiKey: process.env.HW_API_KEY,
     
     // Test vs Production
