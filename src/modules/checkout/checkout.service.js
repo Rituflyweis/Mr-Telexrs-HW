@@ -2,6 +2,7 @@ const Cart = require('../../models/Cart.model');
 const Patient = require('../../models/Patient.model');
 const Address = require('../../models/Address.model');
 const AppError = require('../../utils/AppError');
+const DEFAULT_SHIPPING_CHARGES = 11;
 
 // Get patient from userId
 const getPatient = async (userId) => {
@@ -29,11 +30,14 @@ exports.getCheckoutSummary = async (userId) => {
     .sort({ isDefault: -1 });
 
 
+  const activeItems = cart.items.filter(item => !item.isSaved);
+  const hasShippableItems = activeItems.some(item => item.productType !== 'doctors_note');
+
   const consultantFees = 34.99;
   // Calculate tax if not set
   const tax = 0;
   //  cart.tax || (cart.subtotal * 0.03);
-  const shippingCharges = cart.shippingCharges || 11.00;
+  const shippingCharges = hasShippableItems ? DEFAULT_SHIPPING_CHARGES : 0;
   const totalAmount = cart.subtotal + shippingCharges + tax - cart.discount + consultantFees;
 
   const defaultAddress = addresses.find(addr => addr.isDefault) || addresses[0];
@@ -234,4 +238,3 @@ exports.getPaymentOptions = async (userId) => {
     }
   };
 };
-
