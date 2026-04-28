@@ -58,9 +58,7 @@ exports.createPaymentIntent = async (amount, currency, metadata = {}, cardDetail
       amount: amountInSmallestUnit,
       currency: currency.toLowerCase(),
       metadata: metadata,
-      automatic_payment_methods: {
-        enabled: !paymentMethodId // Only enable automatic if no payment method provided
-      }
+      payment_method_types: ['card']
     };
     
     // If payment method exists, attach it

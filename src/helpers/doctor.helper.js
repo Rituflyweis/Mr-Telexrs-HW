@@ -686,7 +686,7 @@ const formatConsultation = (intakeForm) => {
 
   const condition = intakeForm.medicalQuestions?.pastMedicalHistory?.join(', ') || 'Not specified';
 
-  const symptoms = intakeForm.medicalQuestions?.currentMedications?.join(', ') || 'No symptoms listed';
+  const symptoms = intakeForm.medicalQuestions?.symptoms?.join(', ') || 'No symptoms listed';
 
   const submittedDate = new Date(intakeForm.createdAt);
   const formattedDate = submittedDate.toLocaleDateString('en-US', {

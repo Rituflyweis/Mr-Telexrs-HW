@@ -72,6 +72,7 @@ const intakeFormSchema = new mongoose.Schema(
       pastMedicalHistory: [String],
       currentMedications: [String],
       medicationAllergies: [String],
+      symptoms: [String],
       preferredPharmacy: {
         addPharmacy: String,
         pharmacyName: String,

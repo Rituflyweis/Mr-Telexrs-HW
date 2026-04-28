@@ -1154,7 +1154,7 @@ exports.getOrdersForDoctor = async (doctorId, query = {}) => {
   const patientIds = [...new Set(orders.map(o => o.patient?._id?.toString()).filter(Boolean))];
   const intakeForms = await IntakeFormModel.find(
     { patient: { $in: patientIds } },
-    { patient: 1, 'medicalQuestions.medicationAllergies': 1, 'medicalQuestions.pastMedicalHistory': 1 }
+    { patient: 1, 'medicalQuestions.medicationAllergies': 1, 'medicalQuestions.pastMedicalHistory': 1, 'medicalQuestions.symptoms': 1 }
   ).lean();
 
   const intakeMap = {};

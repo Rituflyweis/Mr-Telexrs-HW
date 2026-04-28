@@ -347,6 +347,7 @@ exports.getRecentConsultations = async (userId, query = {}) => {
         : 'Unknown Patient';
 
     const condition =
+      intakeForm.medicalQuestions?.symptoms?.join(', ') ||
       intakeForm.medicalQuestions?.pastMedicalHistory?.join(', ') ||
       'Consultation Request';
 

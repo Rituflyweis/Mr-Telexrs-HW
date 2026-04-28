@@ -188,6 +188,9 @@ exports.saveMedicalQuestions = async (userId, data) => {
     medicationAllergies: Array.isArray(data.medicationAllergies)
       ? data.medicationAllergies
       : (intakeForm?.medicalQuestions?.medicationAllergies || []),
+    symptoms: Array.isArray(data.symptoms)
+      ? data.symptoms
+      : (intakeForm?.medicalQuestions?.symptoms || []),
     preferredPharmacy: preferredPharmacy,
     howDidYouHearAboutUs: data.howDidYouHearAboutUs !== undefined
       ? (data.howDidYouHearAboutUs || '')

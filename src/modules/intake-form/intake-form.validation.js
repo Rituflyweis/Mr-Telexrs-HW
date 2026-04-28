@@ -41,6 +41,8 @@ exports.medicalQuestionsValidation = [
   body('currentMedications.*').optional().isString().withMessage('Each medication must be a string'),
   body('medicationAllergies').optional().isArray().withMessage('Medication allergies must be an array'),
   body('medicationAllergies.*').optional().isString().withMessage('Each allergy must be a string'),
+  body('symptoms').optional().isArray().withMessage('Symptoms must be an array'),
+  body('symptoms.*').optional().isString().withMessage('Each symptom must be a string'),
   
   // Preferred Pharmacies - can be sent as array or as individual fields
   body('preferredPharmacies').optional().isArray().withMessage('Preferred pharmacies must be an array'),

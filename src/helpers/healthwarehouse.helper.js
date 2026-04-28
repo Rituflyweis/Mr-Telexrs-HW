@@ -398,7 +398,10 @@ const buildPrescriptionOrderPayload = (order, patient, user, addresses, prescrip
   const medicines = prescriptionData.medicines || [];
   const commonInstruction = prescriptionData.instruction || order.notes || 'As directed';
   const commonWarning = prescriptionData.warning || '';
-  const comments = [commonInstruction, commonWarning].filter(Boolean).join(' | ');
+  const commonSymptoms = Array.isArray(prescriptionData.symptoms) && prescriptionData.symptoms.length
+    ? `Symptoms: ${prescriptionData.symptoms.join(', ')}`
+    : '';
+  const comments = [commonInstruction, commonWarning, commonSymptoms].filter(Boolean).join(' | ');
 
   const patientInfo = {
     prefix: prescriptionData.patientInfo?.prefix || '',

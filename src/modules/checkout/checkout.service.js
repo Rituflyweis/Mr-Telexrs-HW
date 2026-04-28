@@ -176,45 +176,6 @@ exports.getPaymentOptions = async (userId) => {
       enabled: true,
       supportedCardTypes: ['visa', 'mastercard', 'amex', 'discover', 'rupay'],
       requiresDetails: true
-    },
-    {
-      id: 'upi',
-      name: 'UPI',
-      type: 'upi',
-      icon: 'upi',
-      description: 'Pay using UPI (PhonePe, Google Pay, Paytm, etc.)',
-      enabled: true,
-      requiresDetails: true
-    },
-    {
-      id: 'netbanking',
-      name: 'Net Banking',
-      type: 'netbanking',
-      icon: 'netbanking',
-      description: 'Pay using internet banking',
-      enabled: true,
-      requiresDetails: true
-    },
-    {
-      id: 'wallet',
-      name: 'Digital Wallet',
-      type: 'wallet',
-      icon: 'wallet',
-      description: 'Pay using digital wallet (Paytm, PhonePe, etc.)',
-      enabled: true,
-      supportedWallets: ['paytm', 'phonepe', 'googlepay', 'amazonpay'],
-      requiresDetails: true
-    },
-    {
-      id: 'cod',
-      name: 'Cash on Delivery',
-      type: 'cod',
-      icon: 'cod',
-      description: 'Pay cash when your order is delivered',
-      enabled: true,
-      requiresDetails: false,
-      maxAmount: 5000, // Maximum amount for COD (if applicable)
-      available: true
     }
   ];
 
