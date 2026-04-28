@@ -27,16 +27,30 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"firstName\": \"Test\",\n  \"lastName\": \"Patient\",\n  \"countryCode\": \"+1\",\n  \"phoneNumber\": \"5550001234\",\n  \"agreeConfirmation\": \"true\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/auth/register",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "register"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
             },
             "description": "Register a new patient. OTP is returned in the response (dev mode) — auto-saved to {{otp}} variable."
           },
@@ -58,16 +72,30 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"phoneNumber\": \"5550001234\",\n  \"otp\": \"{{otp}}\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/auth/verify-otp",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "verify-otp"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "verify-otp"
+              ]
             },
             "description": "Verify OTP from register response. Token auto-saved to {{patient_token}}."
           },
@@ -89,16 +117,30 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"identifier\": \"5550001234\",\n  \"password\": \"Test@1234\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             },
             "description": "Login with phone + password. Token auto-saved to {{patient_token}}."
           },
@@ -107,18 +149,42 @@
         {
           "name": "Step 3 - Basic Information",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{patient_token}}", "type": "string" }] },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patient_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"firstName\": \"Test\",\n  \"lastName\": \"Patient\",\n  \"sex\": \"male\",\n  \"dateOfBirth\": \"1995-06-15\",\n  \"email\": \"testpatient@example.com\",\n  \"phone\": \"5550001234\",\n  \"address\": \"123 Main Street\",\n  \"city\": \"New York\",\n  \"state\": \"NY\",\n  \"zip\": \"10001\",\n  \"maritalStatus\": \"single\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/patient/intake-form/basic-information",
-              "host": ["{{base_url}}"],
-              "path": ["patient", "intake-form", "basic-information"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "patient",
+                "intake-form",
+                "basic-information"
+              ]
             }
           },
           "response": []
@@ -126,18 +192,42 @@
         {
           "name": "Step 4 - Emergency Contact",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{patient_token}}", "type": "string" }] },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patient_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"relationship\": \"Spouse\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Patient\",\n  \"phone\": \"5550005678\",\n  \"email\": \"jane.patient@example.com\",\n  \"address\": \"123 Main Street\",\n  \"city\": \"New York\",\n  \"state\": \"NY\",\n  \"zip\": \"10001\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/patient/intake-form/emergency-contact",
-              "host": ["{{base_url}}"],
-              "path": ["patient", "intake-form", "emergency-contact"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "patient",
+                "intake-form",
+                "emergency-contact"
+              ]
             }
           },
           "response": []
@@ -145,18 +235,42 @@
         {
           "name": "Step 5 - Medical Questions",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{patient_token}}", "type": "string" }] },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patient_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"pastMedicalHistory\": [\"Diabetes\", \"Hypertension\"],\n  \"currentMedications\": [\"Metformin\", \"Amlodipine\"],\n  \"medicationAllergies\": [\"Penicillin\"],\n  \"preferredPharmacies\": [\n    {\n      \"pharmacyName\": \"City Pharmacy\",\n      \"address\": \"456 Market Street\",\n      \"city\": \"New York\",\n      \"state\": \"NY\",\n      \"zip\": \"10002\"\n    }\n  ],\n  \"howDidYouHearAboutUs\": \"Google Search\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/patient/intake-form/medical-questions",
-              "host": ["{{base_url}}"],
-              "path": ["patient", "intake-form", "medical-questions"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "patient",
+                "intake-form",
+                "medical-questions"
+              ]
             }
           },
           "response": []
@@ -164,18 +278,42 @@
         {
           "name": "Step 6 - Submit Consultation",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{patient_token}}", "type": "string" }] },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patient_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"doctorId\": \"69611415b8c266a7835c0c1a\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/patient/intake-form/submit",
-              "host": ["{{base_url}}"],
-              "path": ["patient", "intake-form", "submit"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "patient",
+                "intake-form",
+                "submit"
+              ]
             },
             "description": "Submit the consultation. doctorId is optional — omit to assign to any available doctor."
           },
@@ -645,6 +783,234 @@
         }
       },
       "response": []
+    },
+    {
+      "name": "US States APIs",
+      "item": [
+        {
+          "name": "Patient - Get US States",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/patient/us-states",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "patient",
+                "us-states"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Patient - Get US States Dropdown",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/patient/us-states/dropdown",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "patient",
+                "us-states",
+                "dropdown"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin - Get All US States",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/admin/us-states?page=1&limit=100",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "us-states"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin - Create US State",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"state\": \"Test State\",\n  \"code\": \"TS\",\n  \"isAvailable\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/us-states",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "us-states"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin - Update US State",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"state\": \"Test State Updated\",\n  \"code\": \"TU\",\n  \"isAvailable\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/us-states/{{state_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "us-states",
+                "{{state_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin - Toggle State Availability",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isAvailable\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/us-states/{{state_id}}/availability",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "us-states",
+                "{{state_id}}",
+                "availability"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin - Delete US State",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/admin/us-states/{{state_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "us-states",
+                "{{state_id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ],
   "auth": {
@@ -696,6 +1062,14 @@
     },
     {
       "key": "phoneNumber",
+      "value": ""
+    },
+    {
+      "key": "admin_token",
+      "value": ""
+    },
+    {
+      "key": "state_id",
       "value": ""
     }
   ]

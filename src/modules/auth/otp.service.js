@@ -16,6 +16,12 @@ const {
   getOtpExpiry
 } = require('../../helpers');
 
+const formatE164 = (countryCode, phoneNumber) => {
+  const cc = countryCode ? countryCode.replace(/\D/g, '') : '';
+  const pn = phoneNumber ? phoneNumber.replace(/\D/g, '') : '';
+  return cc ? `+${cc}${pn}` : phoneNumber;
+};
+
 /**
  * Create or update OTP document
  * @private
@@ -43,7 +49,7 @@ const upsertOtp = async (query, otpData) => {
  * Send OTP for registration (requires user to exist)
  */
 exports.sendOtp = async (phoneNumber, countryCode) => {
-  const user = await User.findOne({ phoneNumber }).select('email').lean();
+  const user = await User.findOne({ phoneNumber }).select('email countryCode').lean();
   if (!user) throw new AppError('User not found', 404);
 
   const otpCode = await upsertOtp(
@@ -55,9 +61,10 @@ exports.sendOtp = async (phoneNumber, countryCode) => {
   let emailSent = false;
 
   // Send via SMS
+  const e164Phone = formatE164(countryCode || user.countryCode, phoneNumber);
   try {
-    await smsService.sendOtpSMS(phoneNumber, otpCode);
-    console.log(`📲 Registration OTP sent via SMS to ${phoneNumber}`);
+    await smsService.sendOtpSMS(e164Phone, otpCode);
+    console.log(`📲 Registration OTP sent via SMS to ${e164Phone}`);
     smsSent = true;
   } catch (error) {
     console.error(`Failed to send Registration OTP SMS to ${phoneNumber}:`, error.message);
@@ -88,7 +95,7 @@ exports.sendOtp = async (phoneNumber, countryCode) => {
  */
 exports.sendLoginOtp = async (identifier, countryCode) => {
   // Verify user exists
-  const user = await User.findOne(buildIdentifierOrQuery(identifier)).select('_id email phoneNumber').lean();
+  const user = await User.findOne(buildIdentifierOrQuery(identifier)).select('_id email phoneNumber countryCode').lean();
   if (!user) throw new AppError('User not found. Please register first.', 404);
 
   const isEmailId = isEmail(identifier);
@@ -106,7 +113,9 @@ exports.sendLoginOtp = async (identifier, countryCode) => {
 
   // Send OTP (Try both email and SMS if user data allows)
   const sendEmail = isEmailId ? normalized : user.email;
-  const sendPhone = isEmailId ? user.phoneNumber : identifier;
+  const rawPhone = isEmailId ? user.phoneNumber : identifier;
+  const phoneCC = isEmailId ? user.countryCode : countryCode;
+  const sendPhone = rawPhone ? formatE164(phoneCC || user.countryCode, rawPhone) : null;
 
   if (sendPhone) {
     try {
@@ -142,7 +151,7 @@ exports.sendLoginOtp = async (identifier, countryCode) => {
  */
 exports.sendPasswordResetOtp = async (identifier, countryCode) => {
   // Verify user exists
-  const user = await User.findOne(buildIdentifierOrQuery(identifier)).select('_id').lean();
+  const user = await User.findOne(buildIdentifierOrQuery(identifier)).select('_id email phoneNumber countryCode').lean();
   if (!user) throw new AppError('User not found', 404);
 
   const isEmailId = isEmail(identifier);
@@ -157,7 +166,9 @@ exports.sendPasswordResetOtp = async (identifier, countryCode) => {
 
   // Send OTP (Try both email and SMS if user data allows)
   const sendEmail = isEmailId ? normalized : user.email;
-  const sendPhone = isEmailId ? user.phoneNumber : identifier;
+  const rawResetPhone = isEmailId ? user.phoneNumber : identifier;
+  const resetPhoneCC = isEmailId ? user.countryCode : countryCode;
+  const sendPhone = rawResetPhone ? formatE164(resetPhoneCC || user.countryCode, rawResetPhone) : null;
 
   if (sendPhone) {
     try {
@@ -184,8 +195,19 @@ exports.sendPasswordResetOtp = async (identifier, countryCode) => {
  * Verify OTP (accepts email or phone) - BYPASSED BY DEFAULT
  */
 exports.verifyOtp = async (identifier, otp) => {
-  // Bypass OTP verification: always verify the user if they exist
-  const user = await User.findOneAndUpdate(buildIdentifierOrQuery(identifier), { $set: { isVerified: true } }, { new: true }).select('-password').lean();
+  const isEmailId = isEmail(identifier);
+  const query = isEmailId ? { email: normalizeIdentifier(identifier) } : { phoneNumber: identifier };
+
+  const otpDoc = await Otp.findOne(query).lean();
+  if (!otpDoc || otpDoc.otp !== otp || new Date() > new Date(otpDoc.expiresAt)) {
+    return false;
+  }
+
+  const user = await User.findOneAndUpdate(
+    buildIdentifierOrQuery(identifier),
+    { $set: { isVerified: true } },
+    { new: true }
+  ).select('-password').lean();
 
   return user || false;
 };

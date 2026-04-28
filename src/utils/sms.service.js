@@ -30,7 +30,7 @@ try {
  */
 exports.sendSMS = async (to, body) => {
   try {
-    if (!client || (process.env.NODE_ENV === 'development' && !twilioPhoneNumber)) {
+    if (!client || !twilioPhoneNumber) {
       console.log(`📱 SMS Mock to ${to}: ${body}`);
       return { sid: 'mock_sid', status: 'sent' };
     }

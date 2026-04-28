@@ -119,63 +119,6 @@ exports.saveMedicalQuestions = async (userId, data) => {
   const patient = await getPatient(userId);
   let intakeForm = await IntakeForm.findOne({ patient: patient._id });
 
-  // Handle preferred pharmacy - single object (not array)
-  let preferredPharmacy = null;
-
-  // Get existing pharmacy if form exists
-  if (intakeForm?.medicalQuestions?.preferredPharmacy) {
-    preferredPharmacy = { ...intakeForm.medicalQuestions.preferredPharmacy };
-  }
-
-  // Handle single pharmacy entry form (like image) - "Add" field or individual fields
-  if (data.addPharmacy || data.add || data.pharmacyName || data.address) {
-    // Both addPharmacy and pharmacyName are recommended/required
-    const pharmacyNameFromAdd = data.addPharmacy ? String(data.addPharmacy).trim() : (data.add ? String(data.add).trim() : '');
-    const pharmacyNameFromField = data.pharmacyName ? String(data.pharmacyName).trim() : '';
-
-    // Use addPharmacy first, then pharmacyName, but both should ideally be present
-    const pharmacyName = pharmacyNameFromAdd || pharmacyNameFromField;
-    const address = data.address ? String(data.address).trim() : '';
-
-    // Validate that at least one name field is provided
-    if (!pharmacyNameFromAdd && !pharmacyNameFromField) {
-      logger.warn('Pharmacy name missing - both addPharmacy and pharmacyName are empty', {
-        addPharmacy: data.addPharmacy,
-        pharmacyName: data.pharmacyName
-      });
-      // Keep existing pharmacy if name is missing
-    } else {
-      // Log for debugging
-      logger.info('Processing single pharmacy entry', {
-        addPharmacy: data.addPharmacy,
-        pharmacyName: data.pharmacyName,
-        resolvedPharmacyName: pharmacyName,
-        address: address,
-        hasPharmacyName: !!pharmacyName,
-        hasAddress: !!address
-      });
-
-      // Save if pharmacy name is provided (address is optional)
-      if (data.preferredPharmacies.length > 0 || pharmacyName) {
-        // preferredPharmacy = {
-        //   addPharmacy: pharmacyNameFromAdd || '',
-        //   pharmacyName: pharmacyName || '',
-        //   address: address || '',
-        //   city: data.city ? String(data.city).trim() : '',
-        //   state: data.state ? String(data.state).trim() : '',
-        //   zip: data.zip ? String(data.zip).trim() : ''
-        // };
-        preferredPharmacy = data.preferredPharmacies[0]
-
-        logger.info('Single pharmacy saved successfully', { pharmacyName: preferredPharmacy.pharmacyName, address: preferredPharmacy.address });
-      } else {
-        logger.warn('Pharmacy not saved - pharmacy name is required', { addPharmacy: data.addPharmacy, pharmacyName: data.pharmacyName, address: data.address });
-        // Keep existing pharmacy if new data is invalid
-      }
-    }
-  }
-  // If no pharmacy data provided, keep existing pharmacy
-
   // Build medical questions data
   // If arrays are provided in request, use them (even if empty), otherwise keep existing
   const medicalQuestionsData = {
@@ -191,7 +134,6 @@ exports.saveMedicalQuestions = async (userId, data) => {
     symptoms: Array.isArray(data.symptoms)
       ? data.symptoms
       : (intakeForm?.medicalQuestions?.symptoms || []),
-    preferredPharmacy: preferredPharmacy,
     howDidYouHearAboutUs: data.howDidYouHearAboutUs !== undefined
       ? (data.howDidYouHearAboutUs || '')
       : (intakeForm?.medicalQuestions?.howDidYouHearAboutUs || '')
@@ -201,7 +143,6 @@ exports.saveMedicalQuestions = async (userId, data) => {
   const hasData = medicalQuestionsData.pastMedicalHistory?.length > 0 ||
     medicalQuestionsData.currentMedications?.length > 0 ||
     medicalQuestionsData.medicationAllergies?.length > 0 ||
-    (medicalQuestionsData.preferredPharmacy && (medicalQuestionsData.preferredPharmacy.pharmacyName || medicalQuestionsData.preferredPharmacy.address)) ||
     medicalQuestionsData.howDidYouHearAboutUs;
 
   medicalQuestionsData.isMedicalQuestionsComplete = hasData;
@@ -384,7 +325,6 @@ exports.saveIntakeForm = async (userId, data) => {
 //     (medicalQuestions?.pastMedicalHistory?.length > 0) ||
 //     (medicalQuestions?.currentMedications?.length > 0) ||
 //     (medicalQuestions?.medicationAllergies?.length > 0) ||
-//     (medicalQuestions?.preferredPharmacy?.pharmacyName) ||
 //     medicalQuestions?.howDidYouHearAboutUs;
 
 //   const isMedicalQuestionsComplete = !!hasMedicalData;
