@@ -1213,6 +1213,20 @@ exports.createOrderByDoctor = async (doctorId, orderId) => {
     throw new AppError(`Patient not found for order ${orderId}`, 404);
   }
 
+  // Fill missing gender/dateOfBirth from intake form if not on patient doc
+  if (!patient.gender || !patient.dateOfBirth) {
+    const intakeForm = await IntakeFormModel.findOne({ patient: patient._id }).lean();
+    if (intakeForm?.basicInformation) {
+      if (!patient.gender && intakeForm.basicInformation.sex) {
+        patient.gender = intakeForm.basicInformation.sex;
+      }
+      if (!patient.dateOfBirth && intakeForm.basicInformation.dateOfBirth) {
+        patient.dateOfBirth = intakeForm.basicInformation.dateOfBirth;
+      }
+      await patient.save();
+    }
+  }
+
   if (!user) {
     throw new AppError(`User not found for patient ${patient._id}`, 404);
   }
@@ -1318,6 +1332,20 @@ exports.createPrescriptionOrderByDoctor = async (doctorId, data) => {
   // Get patient and user
   let patient = order.patient;
   const user = await User.findById(patient.user);
+
+  // Fill missing gender/dateOfBirth from intake form if not on patient doc
+  if (!patient.gender || !patient.dateOfBirth) {
+    const intakeForm = await IntakeFormModel.findOne({ patient: patient._id }).lean();
+    if (intakeForm?.basicInformation) {
+      if (!patient.gender && intakeForm.basicInformation.sex) {
+        patient.gender = intakeForm.basicInformation.sex;
+      }
+      if (!patient.dateOfBirth && intakeForm.basicInformation.dateOfBirth) {
+        patient.dateOfBirth = intakeForm.basicInformation.dateOfBirth;
+      }
+      await patient.save();
+    }
+  }
 
   // Auto-sync HW customer if missing — use order's shipping address
   // Auto-sync HW customer + address if missing
