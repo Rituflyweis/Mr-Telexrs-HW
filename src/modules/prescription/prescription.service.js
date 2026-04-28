@@ -66,20 +66,17 @@ exports.reorderPrescription = async (userId, prescriptionId) => {
 };
 
 exports.createPrescription = async (patientId, data, createdById) => {
-  // Validate patientId
   if (!mongoose.Types.ObjectId.isValid(patientId)) {
     throw new AppError('Invalid patient ID format', 400);
   }
 
-  const { doctor, medicine, brand, description, status, duration, frequency, refillsAllowed, instruction, warning } = data;
+  const { doctor, medicines, instruction, warning, status } = data;
 
-  // Verify patient exists
   const patient = await Patient.findById(patientId);
   if (!patient) {
     throw new AppError('Patient not found', 404);
   }
 
-  // Validate and verify doctor if provided
   if (doctor) {
     if (!mongoose.Types.ObjectId.isValid(doctor)) {
       throw new AppError('Invalid doctor ID format', 400);
@@ -90,40 +87,38 @@ exports.createPrescription = async (patientId, data, createdById) => {
     }
   }
 
-  // Validate required fields
-  if (!medicine || !medicine.trim()) {
-    throw new AppError('Medicine is required', 400);
-  }
-  if (!brand || !brand.trim()) {
-    throw new AppError('Brand is required', 400);
-  }
-  if (!description || !description.trim()) {
-    throw new AppError('Description is required', 400);
+  if (!medicines || !Array.isArray(medicines) || medicines.length === 0) {
+    throw new AppError('At least one medicine is required', 400);
   }
 
-  // Generate prescription number
+  for (const med of medicines) {
+    if (!med.name || !med.name.trim()) {
+      throw new AppError('Medicine name is required', 400);
+    }
+  }
+
   const generatePrescriptionNumber = () => {
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
     return `PRES${timestamp}${random}`;
   };
 
-  // Create prescription
   const prescriptionData = {
     patient: patientId,
-    duration:duration, 
-    frequency:frequency, 
-    refillsAllowed:refillsAllowed, 
-    instruction:instruction, 
-    warning:warning,
-    medicine: medicine.trim(),
-    brand: brand.trim(),
-    description: description.trim(),
+    medications: medicines.map(med => ({
+      name: med.name?.trim(),
+      brand: med.brand?.trim(),
+      description: med.description?.trim(),
+      duration: med.duration?.trim(),
+      frequency: med.frequency?.trim(),
+      refillsAllowed: med.refillsAllowed?.trim()
+    })),
+    instruction,
+    warning,
     status: status || 'active',
-    prescriptionNumber: generatePrescriptionNumber() // Generate in service to ensure it's set
+    prescriptionNumber: generatePrescriptionNumber()
   };
 
-  // Add doctor if provided
   if (doctor) {
     prescriptionData.doctor = doctor;
   }
