@@ -129,9 +129,9 @@ cartSchema.pre('save', function (next) {
       // Calculate tax (3% of subtotal for regular items only)
       this.tax = regularSubtotal * 0.03;
       
-      // Set shipping charges (default ₹10 if not set) - only for regular items
+      // Set shipping charges (default $11 if not set) - only for regular items
       if (!this.shippingCharges || this.shippingCharges === 0) {
-        this.shippingCharges = 10.00;
+        this.shippingCharges = 11.00;
       }
     }
   }

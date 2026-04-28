@@ -33,7 +33,7 @@ exports.getCheckoutSummary = async (userId) => {
   // Calculate tax if not set
   const tax = 0;
   //  cart.tax || (cart.subtotal * 0.03);
-  const shippingCharges = cart.shippingCharges || 10.00;
+  const shippingCharges = cart.shippingCharges || 11.00;
   const totalAmount = cart.subtotal + shippingCharges + tax - cart.discount + consultantFees;
 
   const defaultAddress = addresses.find(addr => addr.isDefault) || addresses[0];
