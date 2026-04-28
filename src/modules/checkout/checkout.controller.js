@@ -28,7 +28,7 @@ exports.processCheckout = async (req, res, next) => {
     const order = await orderService.createOrder(req.user.id, {
       createFromCart: true,
       shippingAddressId: req.body.shippingAddressId,
-      shippingCharges: 10,
+      shippingCharges: 11,
       billingAddress: validationResult.billingAddress,
       billingAddressSameAsShipping: validationResult.billingAddressSameAsShipping,
       orderComment: req.body.orderComment,
@@ -52,4 +52,3 @@ exports.processCheckout = async (req, res, next) => {
     });
   } catch (err) { next(err); }
 };
-

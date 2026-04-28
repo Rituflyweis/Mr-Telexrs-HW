@@ -19,6 +19,7 @@ const {
 } = require('../../helpers');
 const HWHelper = require('../../helpers/healthwarehouse.helper');
 const IntakeFormModel = require('../../models/IntakeForm.model');
+const DEFAULT_SHIPPING_CHARGES = 11;
 
 /**
  * Finalize order after payment success:
@@ -442,7 +443,7 @@ exports.reorder = async (userId, orderId) => {
   const tax = 0;
   const consultantFees = 34.99;
   // subtotal * 0.18;
-  const shippingCharges = originalOrder.shippingCharges || 10.00;
+  const shippingCharges = originalOrder.shippingCharges || DEFAULT_SHIPPING_CHARGES;
   const totalAmount = subtotal + shippingCharges + tax + consultantFees;
 
   const newOrder = await Order.create({
@@ -578,7 +579,7 @@ exports.createRefillOrder = async (userId, data) => {
   const items = [refillProduct];
   const subtotal = refillProduct.totalPrice;
 
-  const shippingCharges = data.shippingCharges ?? 0;
+  const shippingCharges = data.shippingCharges || DEFAULT_SHIPPING_CHARGES;
   const tax = data.tax ?? 0;
   const discount = data.discount ?? 0;
 
@@ -794,7 +795,7 @@ exports.createOrder = async (userId, data) => {
     consultantFees = 34.99;
     // cart.tax || (subtotal * 0.03);
     discount = cart.discount || 0;
-    shippingCharges = cart.shippingCharges || 10.00;
+    shippingCharges = cart.shippingCharges || DEFAULT_SHIPPING_CHARGES;
     couponCode = cart.couponCode;
   } else {
     // Legacy: If prescription provided, load it
@@ -933,7 +934,7 @@ exports.createOrder = async (userId, data) => {
 
     // Calculate totals
     subtotal = data.subtotal || items.reduce((sum, item) => sum + item.totalPrice, 0);
-    shippingCharges = data.shippingCharges || 10;
+    shippingCharges = data.shippingCharges || DEFAULT_SHIPPING_CHARGES;
     tax = 0;
     consultantFees = 34.99;
     // data.tax || (subtotal * 0.18); // 18% GST or 3% for cart

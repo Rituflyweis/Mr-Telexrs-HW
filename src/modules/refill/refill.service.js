@@ -341,7 +341,7 @@ exports.createOrderFromRefill = async (userId, orderData) => {
 
   // Calculate totals
   const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
-  const shippingCharges = 0;
+  const shippingCharges = 11;
   const tax = 0;
   const consultantFees = 0;
   // orderData.tax || (subtotal * 0.02); // 2% tax as shown in image
