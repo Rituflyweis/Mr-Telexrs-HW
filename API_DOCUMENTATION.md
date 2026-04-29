@@ -12167,10 +12167,10 @@ category: "Antibiotics"
 stock: 450
 
 // Health Category and Type (Optional - for health module integration)
-// IMPORTANT: If healthTypeSlug is provided, healthCategory MUST be provided
-// healthTypeSlug must be one of the types within the selected healthCategory
+// IMPORTANT: If healthTypeSlug is provided on create, healthCategory MUST be provided
+// healthTypeSlug values must be types within the selected healthCategory
 healthCategory: "health_category_id" (MongoDB ObjectId - Select ONE health category)
-healthTypeSlug: "asthma" (Select ONE type from the selected category's types, e.g., 'asthma', 'dry-eye', 'copd')
+healthTypeSlug: ["asthma", "copd"] (Select one or more types from the selected category's types, e.g., 'asthma', 'dry-eye', 'copd')
 
 // Admin Flags (Optional)
 isTrendy: true (mark as trendy product)
@@ -12220,7 +12220,7 @@ status: "in_stock"
   "category": "Antibiotics",
   "stock": 450,
   "healthCategory": "health_category_id",
-  "healthTypeSlug": "asthma",
+  "healthTypeSlug": ["asthma", "copd"],
   "isTrendy": true,
   "isBestOffer": false,
   "usage": [
@@ -12330,7 +12330,7 @@ status: "in_stock"
         }
       ]
     },
-    "healthTypeSlug": "asthma",
+    "healthTypeSlug": ["asthma", "copd"],
     "isTrendy": true,
     "isBestOffer": false,
     "views": 0,
@@ -12347,17 +12347,17 @@ status: "in_stock"
 **Notes:**
 - **Health Category Selection:**
   - `healthCategory` (optional) - Select ONE health category (e.g., "Respiratory Health", "Eye Care")
-  - `healthTypeSlug` (optional) - Select ONE type from the selected category's types (e.g., "asthma", "dry-eye")
-  - **IMPORTANT:** If `healthTypeSlug` is provided, `healthCategory` MUST be provided
-  - `healthTypeSlug` must exist in the selected `healthCategory`'s types
+  - `healthTypeSlug` (optional) - Select one or more types from the selected category's types (e.g., `["asthma", "dry-eye"]`)
+  - **IMPORTANT:** If `healthTypeSlug` is provided on create, `healthCategory` MUST be provided. On update, the existing medicine health category can be reused.
+  - Every `healthTypeSlug` value must exist in the selected `healthCategory`'s types
   - Example: If you select "Respiratory Health" category, you can only select types like "asthma", "copd" that belong to that category
 - **Admin Flags:**
   - `isTrendy` (optional) - Mark medicine as trendy (will appear in trendy medications API)
   - `isBestOffer` (optional) - Mark medicine as best offer (will appear in best offers API)
 - **Relationship Flow:**
   1. First, select a health category (only 1 category)
-  2. Then, select a type from that category's available types (only 1 type)
-  3. The type must belong to the selected category
+  2. Then, select one or more types from that category's available types
+  3. Every selected type must belong to the selected category
 
 **Error Responses:**
 - `400` - Validation failed
@@ -12513,7 +12513,7 @@ Get complete details of a specific medicine by ID.
         }
       ]
     },
-    "healthTypeSlug": "asthma",
+    "healthTypeSlug": ["asthma", "copd"],
     "generics": ["Amoxicillin Trihydrate", "Amoxicillin Sodium"],
     "dosageOptions": [
       {
@@ -12644,7 +12644,7 @@ Find medicines similar to the specified medicine based on health category, healt
           }
         ]
       },
-      "healthTypeSlug": "asthma",
+      "healthTypeSlug": ["asthma", "copd"],
       "generics": ["Amoxicillin Trihydrate"],
       "dosageOptions": [
         {
@@ -16062,7 +16062,7 @@ Mark a medicine as trendy (will appear in trendy medications API).
       "description": "Medications for respiratory conditions",
       "icon": "https://example.com/icons/respiratory.svg"
     },
-    "healthTypeSlug": "asthma",
+    "healthTypeSlug": ["asthma", "copd"],
     "views": 150,
     "createdAt": "2025-01-01T10:00:00.000Z",
     "updatedAt": "2025-01-05T12:30:00.000Z"
@@ -16156,7 +16156,7 @@ Mark a medicine as best offer (will appear in best offers API). You can optional
       "name": "Respiratory Health",
       "slug": "respiratory-health"
     },
-    "healthTypeSlug": "asthma",
+    "healthTypeSlug": ["asthma", "copd"],
     "views": 150,
     "createdAt": "2025-01-01T10:00:00.000Z",
     "updatedAt": "2025-01-05T12:30:00.000Z"
@@ -16226,13 +16226,13 @@ Update a medicine's relationship with health category and type (chronic conditio
 ```json
 {
   "healthCategory": "health_category_id",
-  "healthTypeSlug": "asthma"
+  "healthTypeSlug": ["asthma", "copd"]
 }
 ```
 
 **Fields:**
 - `healthCategory` (optional) - Health category ID (MongoDB ObjectId)
-- `healthTypeSlug` (optional) - Health type slug (e.g., 'asthma', 'dry-eye')
+- `healthTypeSlug` (optional) - One or more health type slugs (e.g., `["asthma", "dry-eye"]`)
 
 **Response:**
 ```json
@@ -16260,7 +16260,7 @@ Update a medicine's relationship with health category and type (chronic conditio
         }
       ]
     },
-    "healthTypeSlug": "asthma",
+    "healthTypeSlug": ["asthma", "copd"],
     "createdAt": "2025-01-01T10:00:00.000Z",
     "updatedAt": "2025-01-05T12:30:00.000Z"
   }
@@ -16274,9 +16274,9 @@ Update a medicine's relationship with health category and type (chronic conditio
 - `404` - Medicine not found, health category not found, or health type not found in category
 
 **Notes:**
-- If `healthTypeSlug` is provided, it must exist in the selected `healthCategory`
+- If `healthTypeSlug` is provided, every value must exist in the selected `healthCategory`
 - Both fields are optional - you can update just one or both
-- The health type slug is validated against the health category's types
+- The health type slugs are validated against the health category's types
 
 ---
 
@@ -17637,4 +17637,3 @@ Permanently delete an audit log from the database.
 13. Doctor's notes can only be updated/deleted when status is `pending`
 14. Orders created from cart automatically link doctor's notes
 15. Payment processing is immediate (gateway integration pending)
-

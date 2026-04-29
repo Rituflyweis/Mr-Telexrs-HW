@@ -1,4 +1,65 @@
 const { body, query } = require('express-validator');
+const mongoose = require('mongoose');
+
+const parseIfString = (value) => {
+  if (typeof value !== 'string') return value;
+  try {
+    return JSON.parse(value);
+  } catch (e) {
+    return value;
+  }
+};
+
+const normalizeHealthTypeValues = (value) => {
+  if (value === undefined) return [];
+
+  const parsed = parseIfString(value);
+  const rawValues = Array.isArray(parsed) ? parsed : [parsed];
+  const values = [];
+
+  rawValues.forEach(item => {
+    if (item === null || item === undefined) return;
+
+    if (typeof item === 'string') {
+      item.split(',').forEach(part => {
+        const trimmed = part.trim();
+        if (trimmed) values.push(trimmed);
+      });
+      return;
+    }
+
+    const stringValue = String(item).trim();
+    if (stringValue) values.push(stringValue);
+  });
+
+  return [...new Set(values)];
+};
+
+const isSlugOrObjectId = (value) => {
+  const isObjectId = mongoose.Types.ObjectId.isValid(value);
+  const isSlug = typeof value === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
+  return isObjectId || isSlug;
+};
+
+const validateHealthTypeValues = (value, { req }, fieldName) => {
+  const values = normalizeHealthTypeValues(value);
+  const categoryMissing = !req.body.category && !req.body.healthCategory;
+
+  if (values.length > 0 && req.method !== 'PUT' && categoryMissing) {
+    throw new Error(`Category (or healthCategory) is required when ${fieldName} is provided`);
+  }
+
+  const invalidValue = values.find(item => !isSlugOrObjectId(item));
+  if (invalidValue) {
+    throw new Error(`${fieldName} must contain valid MongoDB ObjectIds or lowercase alphanumeric slugs with hyphens`);
+  }
+
+  return true;
+};
+
+const requiredOnCreateOrPresentOnUpdate = (value, { req }) => {
+  return req.method !== 'PUT' || value !== undefined;
+};
 
 // Bulk JSON upload validation
 exports.bulkJsonUploadValidation = [
@@ -16,6 +77,7 @@ exports.bulkJsonUploadValidation = [
 exports.addMedicineValidation = [
   // Basic Information
   body('productName')
+    .if(requiredOnCreateOrPresentOnUpdate)
     .notEmpty()
     .withMessage('Product name is required')
     .isString()
@@ -23,6 +85,7 @@ exports.addMedicineValidation = [
     .trim(),
   
   body('brand')
+    .if(requiredOnCreateOrPresentOnUpdate)
     .notEmpty()
     .withMessage('Brand is required')
     .isString()
@@ -30,18 +93,21 @@ exports.addMedicineValidation = [
     .trim(),
   
   body('originalPrice')
+    .if(requiredOnCreateOrPresentOnUpdate)
     .notEmpty()
     .withMessage('Original price is required')
     .isFloat({ min: 0 })
     .withMessage('Original price must be a positive number'),
   
   body('salePrice')
+    .if(requiredOnCreateOrPresentOnUpdate)
     .notEmpty()
     .withMessage('Sale price is required')
     .isFloat({ min: 0 })
     .withMessage('Sale price must be a positive number'),
 
     body('rating')
+    .if(requiredOnCreateOrPresentOnUpdate)
     .notEmpty()
     .withMessage('Rating is required')
     .isFloat({ min: 0 })
@@ -178,22 +244,8 @@ exports.addMedicineValidation = [
   body('subCategory')
     .optional()
     .custom((value, { req }) => {
-      // If subCategory is provided, category must also be provided
-      if (value && !req.body.category && !req.body.healthCategory) {
-        throw new Error('Category is required when subCategory is provided');
-      }
-      // subCategory can be either a slug (string) or type ID (MongoDB ObjectId)
-      if (value) {
-        const mongoose = require('mongoose');
-        const isObjectId = mongoose.Types.ObjectId.isValid(value);
-        const isSlug = typeof value === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value.trim());
-        if (!isObjectId && !isSlug) {
-          throw new Error('SubCategory must be either a valid MongoDB ObjectId or a lowercase alphanumeric slug with hyphens');
-        }
-      }
-      return true;
-    })
-    .withMessage('SubCategory must be either a type ID (MongoDB ObjectId) or a slug (lowercase alphanumeric with hyphens)'),
+      return validateHealthTypeValues(value, { req }, 'SubCategory');
+    }),
 
   // Health Category and Type relationships (Legacy/Alternative field names for backward compatibility)
   // Note: If healthTypeSlug/subCategory is provided, healthCategory/category MUST be provided
@@ -205,15 +257,8 @@ exports.addMedicineValidation = [
   
   body('healthTypeSlug')
     .optional()
-    .trim()
-    .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
-    .withMessage('Health type slug must be lowercase alphanumeric with hyphens')
     .custom((value, { req }) => {
-      // If healthTypeSlug is provided, healthCategory or category must also be provided
-      if (value && !req.body.healthCategory && !req.body.category) {
-        throw new Error('Category (or healthCategory) is required when healthTypeSlug is provided');
-      }
-      return true;
+      return validateHealthTypeValues(value, { req }, 'Health type slug');
     }),
   
   // Admin managed flags
@@ -345,4 +390,3 @@ exports.getAllMedicinesValidation = [
 exports.findSimilarMedicinesValidation = [
   // This validation is for query parameters, handled by route
 ];
-

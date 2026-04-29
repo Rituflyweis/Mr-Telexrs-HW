@@ -1,4 +1,12 @@
 const { body, query, param } = require('express-validator');
+const mongoose = require('mongoose');
+const { normalizeHealthTypeValues } = require('../../helpers/medicine.helper');
+
+const isSlugOrObjectId = (value) => {
+  const isObjectId = mongoose.Types.ObjectId.isValid(value);
+  const isSlug = typeof value === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
+  return isObjectId || isSlug;
+};
 
 // Get all health categories validation
 exports.getAllHealthCategoriesValidation = [
@@ -421,9 +429,14 @@ exports.updateMedicineHealthRelationValidation = [
     .withMessage('Health category ID must be a valid MongoDB ID'),
   body('healthTypeSlug')
     .optional()
-    .trim()
-    .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
-    .withMessage('Health type slug must be lowercase alphanumeric with hyphens')
+    .custom((value) => {
+      const values = normalizeHealthTypeValues(value) || [];
+      const invalidValue = values.find(item => !isSlugOrObjectId(item));
+      if (invalidValue) {
+        throw new Error('Health type slug must contain valid MongoDB ObjectIds or lowercase alphanumeric slugs with hyphens');
+      }
+      return true;
+    })
 ];
 
 // Mark medicine as best offer validation (with discount percentage)

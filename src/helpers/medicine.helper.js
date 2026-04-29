@@ -63,7 +63,73 @@ const parseBoolean = (value, defaultValue = false) => {
   return value === 'true' || value === true;
 };
 
+/**
+ * Normalize health type slug/type-id input into a clean array.
+ * Supports JSON array strings, repeated form-data fields, comma-separated strings, and legacy single values.
+ * @param {any} value - Health type slug/type ID input
+ * @returns {Array|undefined}
+ */
+const normalizeHealthTypeValues = (value) => {
+  if (value === undefined) return undefined;
+
+  const parsed = parseIfString(value);
+  const rawValues = Array.isArray(parsed) ? parsed : [parsed];
+  const values = [];
+
+  rawValues.forEach(item => {
+    if (item === null || item === undefined) return;
+
+    if (typeof item === 'string') {
+      item.split(',').forEach(part => {
+        const trimmed = part.trim();
+        if (trimmed) values.push(trimmed);
+      });
+      return;
+    }
+
+    const stringValue = String(item).trim();
+    if (stringValue) values.push(stringValue);
+  });
+
+  return [...new Set(values)];
+};
+
+const hasHealthTypeValues = (value) => {
+  const values = normalizeHealthTypeValues(value);
+  return Array.isArray(values) && values.length > 0;
+};
+
+const toStringArray = (value) => {
+  if (value === undefined || value === null) return [];
+  return (Array.isArray(value) ? value : [value])
+    .filter(item => item !== undefined && item !== null)
+    .map(item => item.toString());
+};
+
+const hasMedicineHealthTypes = (medicine) => {
+  return toStringArray(medicine.healthTypeId).length > 0 || hasHealthTypeValues(medicine.healthTypeSlug);
+};
+
 // ============ HEALTH CATEGORY HELPERS ============
+
+const attachSubCategories = (medicine, types = []) => {
+  const typeIds = toStringArray(medicine.healthTypeId);
+  const slugs = normalizeHealthTypeValues(medicine.healthTypeSlug) || [];
+
+  const matchedTypes = types.filter(type => {
+    const idMatches = type._id && typeIds.includes(type._id.toString());
+    const slugMatches = type.slug && slugs.includes(type.slug);
+    return idMatches || slugMatches;
+  });
+
+  if (matchedTypes.length === 1) {
+    medicine.subCategory = matchedTypes[0];
+  } else if (matchedTypes.length > 1) {
+    medicine.subCategory = matchedTypes;
+  }
+
+  return medicine;
+};
 
 /**
  * Populate subCategory (type) from healthCategory
@@ -71,28 +137,18 @@ const parseBoolean = (value, defaultValue = false) => {
  * @returns {Object} Medicine with populated subCategory
  */
 const populateSubCategory = async (medicine) => {
-  if (!medicine.healthCategory || !medicine.healthTypeId) {
+  if (!medicine.healthCategory || !hasMedicineHealthTypes(medicine)) {
     return medicine;
   }
 
   // If healthCategory is already populated (object), use it directly
   if (typeof medicine.healthCategory === 'object' && medicine.healthCategory.types) {
-    const type = medicine.healthCategory.types.find(
-      t => t._id && t._id.toString() === medicine.healthTypeId.toString()
-    );
-    if (type) {
-      medicine.subCategory = type;
-    }
+    attachSubCategories(medicine, medicine.healthCategory.types);
   } else if (medicine.healthCategory) {
     // If healthCategory is just an ID, fetch it
     const category = await HealthCategory.findById(medicine.healthCategory).lean();
     if (category && category.types) {
-      const type = category.types.find(
-        t => t._id && t._id.toString() === medicine.healthTypeId.toString()
-      );
-      if (type) {
-        medicine.subCategory = type;
-      }
+      attachSubCategories(medicine, category.types);
     }
   }
 
@@ -112,7 +168,7 @@ const batchPopulateSubCategory = async (medicines) => {
   const categoryIdsToFetch = new Set();
 
   medicines.forEach(m => {
-    if (m.healthTypeId && m.healthCategory) {
+    if (hasMedicineHealthTypes(m) && m.healthCategory) {
       // Only fetch if healthCategory is not already populated
       if (typeof m.healthCategory !== 'object' || !m.healthCategory.types) {
         categoryIdsToFetch.add(m.healthCategory.toString());
@@ -131,7 +187,7 @@ const batchPopulateSubCategory = async (medicines) => {
 
   // Populate subCategory for each medicine
   return medicines.map(medicine => {
-    if (!medicine.healthTypeId) return medicine;
+    if (!hasMedicineHealthTypes(medicine)) return medicine;
 
     let types = null;
 
@@ -147,12 +203,7 @@ const batchPopulateSubCategory = async (medicines) => {
 
     // Find the matching type
     if (types) {
-      const type = types.find(
-        t => t._id && t._id.toString() === medicine.healthTypeId.toString()
-      );
-      if (type) {
-        medicine.subCategory = type;
-      }
+      attachSubCategories(medicine, types);
     }
 
     return medicine;
@@ -162,15 +213,16 @@ const batchPopulateSubCategory = async (medicines) => {
 /**
  * Validate healthCategory and healthTypeSlug relationship
  * @param {string} categoryId - Health category ID
- * @param {string} typeSlugOrId - Health type slug or ID
+ * @param {string|Array} typeSlugOrId - Health type slug(s) or ID(s)
  * @returns {Object} { healthTypeId, healthTypeSlug, healthCategory }
  */
 const validateHealthCategory = async (categoryId, typeSlugOrId) => {
-  let healthTypeId = null;
-  let actualHealthTypeSlug = null;
+  const healthTypeValues = normalizeHealthTypeValues(typeSlugOrId);
+  let healthTypeId = undefined;
+  let actualHealthTypeSlug = undefined;
 
   if (!categoryId) {
-    if (typeSlugOrId) {
+    if (healthTypeValues && healthTypeValues.length > 0) {
       throw new AppError('Category is required when subCategory is provided', 400);
     }
     return { healthTypeId, healthTypeSlug: actualHealthTypeSlug, healthCategory: undefined };
@@ -185,31 +237,35 @@ const validateHealthCategory = async (categoryId, typeSlugOrId) => {
     throw new AppError('Category not found or inactive', 404);
   }
 
-  if (typeSlugOrId) {
-    const isObjectId = mongoose.Types.ObjectId.isValid(typeSlugOrId);
-    let typeFound = null;
+  if (healthTypeValues !== undefined) {
+    healthTypeId = [];
+    actualHealthTypeSlug = [];
 
-    if (isObjectId) {
-      // It's a type ID
-      typeFound = healthCategory.types.find(
-        type => type._id && type._id.toString() === typeSlugOrId && type.isActive
-      );
-      if (!typeFound) {
-        throw new AppError(`SubCategory type ID "${typeSlugOrId}" not found in the selected category "${healthCategory.name}"`, 404);
+    for (const healthTypeValue of healthTypeValues) {
+      const isObjectId = mongoose.Types.ObjectId.isValid(healthTypeValue);
+      let typeFound = null;
+
+      if (isObjectId) {
+        // It's a type ID
+        typeFound = healthCategory.types.find(
+          type => type._id && type._id.toString() === healthTypeValue && type.isActive
+        );
+        if (!typeFound) {
+          throw new AppError(`SubCategory type ID "${healthTypeValue}" not found in the selected category "${healthCategory.name}"`, 404);
+        }
+      } else {
+        // It's a slug
+        typeFound = healthCategory.types.find(
+          type => type.slug === healthTypeValue && type.isActive
+        );
+        if (!typeFound) {
+          const availableSlugs = healthCategory.types.filter(t => t.isActive).map(t => t.slug).join(', ');
+          throw new AppError(`SubCategory "${healthTypeValue}" not found in the selected category "${healthCategory.name}". Available subCategories: ${availableSlugs}`, 404);
+        }
       }
-      healthTypeId = typeFound._id;
-      actualHealthTypeSlug = typeFound.slug;
-    } else {
-      // It's a slug
-      typeFound = healthCategory.types.find(
-        type => type.slug === typeSlugOrId && type.isActive
-      );
-      if (!typeFound) {
-        const availableSlugs = healthCategory.types.filter(t => t.isActive).map(t => t.slug).join(', ');
-        throw new AppError(`SubCategory "${typeSlugOrId}" not found in the selected category "${healthCategory.name}". Available subCategories: ${availableSlugs}`, 404);
-      }
-      healthTypeId = typeFound._id;
-      actualHealthTypeSlug = typeSlugOrId;
+
+      healthTypeId.push(typeFound._id);
+      actualHealthTypeSlug.push(typeFound.slug);
     }
   }
 
@@ -560,7 +616,10 @@ const calculateSimilarityScore = (medicine, original) => {
   }
 
   // Health type slug match
-  if (medicine.healthTypeSlug === original.healthTypeSlug) {
+  const medicineSlugs = normalizeHealthTypeValues(medicine.healthTypeSlug) || [];
+  const originalSlugs = normalizeHealthTypeValues(original.healthTypeSlug) || [];
+  const hasCommonSlug = medicineSlugs.some(slug => originalSlugs.includes(slug));
+  if (hasCommonSlug) {
     score += 50;
   }
 
@@ -630,6 +689,8 @@ module.exports = {
   parseIfString,
   normalizeUsage,
   parseBoolean,
+  normalizeHealthTypeValues,
+  hasHealthTypeValues,
 
   // Health category helpers
   populateSubCategory,
@@ -662,4 +723,3 @@ module.exports = {
   HEALTH_CATEGORY_POPULATE,
   HEALTH_CATEGORY_POPULATE_ALL
 };
-

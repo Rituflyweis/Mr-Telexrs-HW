@@ -149,14 +149,13 @@ const medicineSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'HealthCategory'
     },
-    healthTypeSlug: {
+    healthTypeSlug: [{
       type: String,
       trim: true
-    },
-    healthTypeId: {
-      type: mongoose.Schema.Types.ObjectId,
-      default: null
-    },
+    }],
+    healthTypeId: [{
+      type: mongoose.Schema.Types.ObjectId
+    }],
     // Admin managed flags
     isTrendy: {
       type: Boolean,
@@ -275,4 +274,3 @@ medicineSchema.post('init', function (doc) {
 });
 
 module.exports = mongoose.model('Medicine', medicineSchema);
-

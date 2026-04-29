@@ -6,13 +6,14 @@
 const Medicine = require('../../models/Medicine.model');
 const HealthCategory = require('../../models/HealthCategory.model');
 const AppError = require('../../utils/AppError');
-const mongoose = require('mongoose');
 const logger = require('../../utils/logger');
 const { parsePagination, buildPaginationResponse } = require('../../helpers/pagination.helper');
 const {
   parseIfString,
   normalizeUsage,
   parseBoolean,
+  normalizeHealthTypeValues,
+  hasHealthTypeValues,
   populateSubCategory,
   batchPopulateSubCategory,
   validateHealthCategory,
@@ -45,7 +46,7 @@ exports.bulkAddMedicinesFromJson = async (medicinesPayload = []) => {
   for (const data of medicinesPayload) {
     // Map category/subCategory to healthCategory/healthTypeSlug
     const healthCategoryId = data.category || data.healthCategory;
-    const healthTypeSlugValue = data.subCategory || data.healthTypeSlug;
+    const healthTypeSlugValue = data.subCategory !== undefined ? data.subCategory : data.healthTypeSlug;
 
     // Validate health category relationship
     const healthCategoryData = await validateHealthCategory(healthCategoryId, healthTypeSlugValue);
@@ -82,7 +83,7 @@ exports.bulkAddMedicinesFromJson = async (medicinesPayload = []) => {
 exports.addMedicine = async (data, files = [], req = null) => {
   // Map category/subCategory to healthCategory/healthTypeSlug
   const healthCategoryId = data.category || data.healthCategory;
-  const healthTypeSlugValue = data.subCategory || data.healthTypeSlug;
+  const healthTypeSlugValue = data.subCategory !== undefined ? data.subCategory : data.healthTypeSlug;
 
   // Validate health category relationship
   const healthCategoryData = await validateHealthCategory(healthCategoryId, healthTypeSlugValue);
@@ -193,9 +194,10 @@ exports.findSimilarMedicines = async (medicineId, options = {}) => {
     });
   }
   
-  if (originalMedicine.healthTypeSlug) {
+  if (hasHealthTypeValues(originalMedicine.healthTypeSlug)) {
+    const originalHealthTypeSlugs = normalizeHealthTypeValues(originalMedicine.healthTypeSlug);
     similarityCriteria.push({
-      healthTypeSlug: originalMedicine.healthTypeSlug,
+      healthTypeSlug: { $in: originalHealthTypeSlugs },
       _id: { $ne: medicineId }
     });
   }
@@ -285,7 +287,7 @@ exports.updateMedicine = async (medicineId, data, files = [], req = null) => {
   const healthTypeSlugValue = data.subCategory !== undefined ? data.subCategory : (data.healthTypeSlug !== undefined ? data.healthTypeSlug : undefined);
 
   // Validate relationship
-  if (healthTypeSlugValue !== undefined && !healthCategoryId && !medicine.healthCategory) {
+  if (hasHealthTypeValues(healthTypeSlugValue) && !healthCategoryId && !medicine.healthCategory) {
     throw new AppError('Category is required when subCategory is provided', 400);
   }
 
@@ -294,7 +296,8 @@ exports.updateMedicine = async (medicineId, data, files = [], req = null) => {
   const healthCategoryToValidate = healthCategoryId || (healthTypeSlugValue !== undefined ? medicine.healthCategory : null);
   
   if (healthCategoryToValidate) {
-    healthCategoryData = await validateHealthCategory(healthCategoryToValidate, healthTypeSlugValue || medicine.healthTypeSlug);
+    const healthTypeValueToValidate = healthTypeSlugValue !== undefined ? healthTypeSlugValue : medicine.healthTypeSlug;
+    healthCategoryData = await validateHealthCategory(healthCategoryToValidate, healthTypeValueToValidate);
   }
 
   // Process images (handle both JSON and file uploads)
@@ -305,32 +308,6 @@ exports.updateMedicine = async (medicineId, data, files = [], req = null) => {
 
   // Apply updates
   applyMedicineUpdates(medicine, data, images, healthCategoryData);
-
-  // Handle subCategory update without category change
-  if (data.subCategory && !healthCategoryId && medicine.healthCategory) {
-    const healthCategory = await HealthCategory.findById(medicine.healthCategory);
-    if (healthCategory) {
-      const isObjectId = mongoose.Types.ObjectId.isValid(data.subCategory);
-      let typeFound = null;
-      
-      if (isObjectId) {
-        typeFound = healthCategory.types.find(
-          type => type._id && type._id.toString() === data.subCategory && type.isActive
-        );
-      } else {
-        typeFound = healthCategory.types.find(
-          type => type.slug === data.subCategory && type.isActive
-        );
-      }
-      
-      if (!typeFound) {
-        const availableSlugs = healthCategory.types.filter(t => t.isActive).map(t => t.slug).join(', ');
-        throw new AppError(`SubCategory "${data.subCategory}" not found in the current category "${healthCategory.name}". Available subCategories: ${availableSlugs}`, 404);
-      }
-      medicine.healthTypeSlug = isObjectId ? typeFound.slug : data.subCategory;
-      medicine.healthTypeId = typeFound._id;
-    }
-  }
 
   await medicine.save();
   

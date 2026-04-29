@@ -9,6 +9,10 @@ const AppError = require('../../utils/AppError');
 const mongoose = require('mongoose');
 const logger = require('../../utils/logger');
 const {
+  normalizeHealthTypeValues,
+  hasHealthTypeValues
+} = require('../../helpers/medicine.helper');
+const {
   CATEGORY_USER_POPULATE,
   MEDICINE_HEALTH_CATEGORY_POPULATE,
   MEDICINE_HEALTH_CATEGORY_FULL_POPULATE,
@@ -569,19 +573,41 @@ exports.updateMedicineHealthRelation = async (medicineId, data, userId) => {
   }
 
   // Validate healthTypeSlug if provided
-  if (data.healthTypeSlug) {
-    if (medicine.healthCategory) {
+  if (data.healthTypeSlug !== undefined) {
+    const healthTypeValues = normalizeHealthTypeValues(data.healthTypeSlug) || [];
+
+    if (hasHealthTypeValues(data.healthTypeSlug) && !medicine.healthCategory) {
+      throw new AppError('Health category is required when health type slug is provided', 400);
+    }
+
+    const matchedTypeIds = [];
+    const matchedTypeSlugs = [];
+
+    if (healthTypeValues.length > 0) {
       const healthCategory = await HealthCategory.findById(medicine.healthCategory);
-      if (healthCategory) {
-        const typeExists = healthCategory.types.some(
-          type => type.slug === data.healthTypeSlug && type.isActive
-        );
-        if (!typeExists) {
+      if (!healthCategory || !healthCategory.isActive) {
+        throw new AppError('Health category not found or inactive', 404);
+      }
+
+      for (const healthTypeValue of healthTypeValues) {
+        const isObjectId = mongoose.Types.ObjectId.isValid(healthTypeValue);
+        const typeFound = healthCategory.types.find(type => {
+          const idMatches = isObjectId && type._id && type._id.toString() === healthTypeValue;
+          const slugMatches = type.slug === healthTypeValue;
+          return (idMatches || slugMatches) && type.isActive;
+        });
+
+        if (!typeFound) {
           throw new AppError('Health type not found in the selected category', 404);
         }
+
+        matchedTypeIds.push(typeFound._id);
+        matchedTypeSlugs.push(typeFound.slug);
       }
     }
-    medicine.healthTypeSlug = data.healthTypeSlug;
+
+    medicine.healthTypeSlug = matchedTypeSlugs;
+    medicine.healthTypeId = matchedTypeIds;
   }
 
   await medicine.save();
