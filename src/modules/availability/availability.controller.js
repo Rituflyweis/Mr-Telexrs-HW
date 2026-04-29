@@ -140,6 +140,55 @@ const checkStateAvailability = async (req, res, next) => {
 
 module.exports = {
     getStatesAvailability,
+    getAdminStates: async (req, res, next) => {
+        try {
+            const states = await availabilityService.getAllStatesForAdmin();
+            res.status(200).json({
+                success: true,
+                message: 'States retrieved successfully',
+                count: states.length,
+                data: states
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
+    createState: async (req, res, next) => {
+        try {
+            const state = await availabilityService.createState(req.body);
+            res.status(201).json({
+                success: true,
+                message: 'State created successfully',
+                data: state
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
+    updateState: async (req, res, next) => {
+        try {
+            const state = await availabilityService.updateStateById(req.params.id, req.body);
+            res.status(200).json({
+                success: true,
+                message: 'State updated successfully',
+                data: state
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
+    deleteState: async (req, res, next) => {
+        try {
+            const state = await availabilityService.deleteStateById(req.params.id);
+            res.status(200).json({
+                success: true,
+                message: 'State deleted successfully',
+                data: { id: state._id }
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
     updateStateAvailability,
     bulkUpdateStates,
     getAvailableStates,

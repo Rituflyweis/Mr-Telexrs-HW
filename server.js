@@ -2,21 +2,22 @@ require('dotenv').config();
 const app = require('./app');
 const connectDB = require('./src/config/db');
 const logger = require('./src/utils/logger');
-const { seedStates, getSeededStatesCount } = require('./src/modules/us-state/us-state.service');
+const { seedStatesIfEmpty } = require('./src/modules/availability/availability.service');
+const { ALL_US_STATES } = require('./src/constants/states');
 
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
     await connectDB();
-    await seedStates();
+    await seedStatesIfEmpty();
 
     app.listen(PORT, () => {
       logger.info(`🚀 Server started on port ${PORT}`, {
         port: PORT,
         environment: process.env.NODE_ENV || 'development',
         timestamp: new Date().toISOString(),
-        seededStatesCount: getSeededStatesCount()
+        seededStatesCount: ALL_US_STATES.length
       });
     });
   } catch (error) {

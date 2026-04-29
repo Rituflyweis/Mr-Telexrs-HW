@@ -138,6 +138,7 @@ router.use('/admin', require('../modules/dashboard/dashboard.routes'));
    COMPLIANCE & SECURITY ROUTES (Admin/Sub-Admin Only)
 ======================= */
 router.use('/admin/compliance-security', require('../modules/compliance-security/compliance-security.routes'));
+router.use('/admin', require('../modules/availability/availability.admin.routes'));
 
 /* =======================
    DOCTOR DASHBOARD ROUTES (Doctor Only)

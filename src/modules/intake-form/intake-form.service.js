@@ -157,13 +157,18 @@ exports.saveMedicalQuestions = async (userId, data) => {
     await intakeForm.save();
   }
 
-  patient.drug_allergy = data.medicationAllergies.join(", ") || intakeForm?.medicalQuestions?.medicationAllergies.join(", ");
-  patient.other_medications = data.currentMedications.join(", ") || intakeForm?.medicalQuestions?.currentMedications.join(", ");
-  patient.medical_conditions = data.pastMedicalHistory.join(", ") || intakeForm?.medicalQuestions?.pastMedicalHistory.join(", ");
+  patient.medicalHistory = medicalQuestionsData.pastMedicalHistory;
+  patient.allergies = medicalQuestionsData.medicationAllergies;
 
-  if(patient?.hw_patient_id) {
-  const patientUpdated = await healthwarehouse.updatePatient(patient.hw_patient_id, patient, patient.user);
-  console.log('Patient Updated in HW', patientUpdated);
+  patient.drugAllergy = medicalQuestionsData.medicationAllergies.join(", ");
+  patient.otherMedications = medicalQuestionsData.currentMedications.join(", ");
+  patient.medicalConditions = medicalQuestionsData.pastMedicalHistory.join(", ");
+
+  await patient.save();
+
+  if (patient?.hw_patient_id) {
+    const patientUpdated = await healthwarehouse.updatePatient(patient.hw_patient_id, patient, patient.user);
+    console.log('Patient Updated in HW', patientUpdated);
   }
 
   // Populate doctor before returning

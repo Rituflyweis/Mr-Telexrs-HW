@@ -5,6 +5,32 @@ const pdfGenerator = require('../../utils/pdfGenerator');
 const mongoose = require('mongoose');
 const Doctor = require('../../models/Doctor.model');
 const logger = require('../../utils/logger');
+const IntakeForm = require('../../models/IntakeForm.model');
+
+const cleanArray = (value) => Array.isArray(value) ? value.filter(Boolean) : [];
+
+const getPatientMedicalData = async (patientId, patient = {}) => {
+  const intakeForm = await IntakeForm.findOne(
+    { patient: patientId },
+    {
+      'medicalQuestions.pastMedicalHistory': 1,
+      'medicalQuestions.medicationAllergies': 1
+    }
+  ).lean();
+
+  const intakeMedicalHistory = cleanArray(intakeForm?.medicalQuestions?.pastMedicalHistory);
+  const intakeAllergies = cleanArray(intakeForm?.medicalQuestions?.medicationAllergies);
+
+  return {
+    medicalHistory: intakeMedicalHistory.length > 0
+      ? intakeMedicalHistory
+      : cleanArray(patient.medicalHistory),
+    allergies: intakeAllergies.length > 0
+      ? intakeAllergies
+      : cleanArray(patient.allergies)
+  };
+};
+
 // Get patient from userId
 const getPatient = async (userId) => {
   const patient = await Patient.findOne({ user: userId });
@@ -142,17 +168,23 @@ exports.createPrescription = async (patientId, data, createdById) => {
       path: 'doctor',
       populate: {
         path: 'user',
-        select: '-password'
+        select: '-password -currentSessionToken'
       }
     })
     .populate({
       path: 'patient',
       populate: {
         path: 'user',
-        select: '-password'
+        select: '-password -currentSessionToken'
       }
     })
     .lean();
+
+  if (populatedPrescription?.patient) {
+    const medicalData = await getPatientMedicalData(patientId, populatedPrescription.patient);
+    populatedPrescription.patient.medicalHistory = medicalData.medicalHistory;
+    populatedPrescription.patient.allergies = medicalData.allergies;
+  }
 
   logger.info('Prescription created successfully', {
     patientId,

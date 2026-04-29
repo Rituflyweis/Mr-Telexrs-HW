@@ -1,6 +1,8 @@
 const StateAvailability = require('../../models/StateAvailability.model');
 const AvailabilityContent = require('../../models/AvailabilityContent.model');
 const {ALL_US_STATES} = require('../../constants/states');
+const AppError = require('../../utils/AppError');
+const mongoose = require('mongoose');
 
 // Seed DB with all US states (available: true) if empty
 const seedStatesIfEmpty = async () => {
@@ -17,6 +19,113 @@ const getAllStates = async () => {
     await seedStatesIfEmpty();
     const states = await StateAvailability.find({ isActive: true }).sort({ state: 1 }).lean();
     return states.map(s => ({ state: s.state, code: s.code, available: s.available }));
+};
+
+const getAllStatesForAdmin = async () => {
+    await seedStatesIfEmpty();
+    return StateAvailability.find({ isActive: true }).sort({ state: 1 }).lean();
+};
+
+const validateStatePayload = ({ state, code, available }, isCreate = false) => {
+    if (isCreate && (!state || !code)) {
+        throw new AppError('state and code are required', 400);
+    }
+
+    if (state !== undefined && (typeof state !== 'string' || !state.trim())) {
+        throw new AppError('state must be a non-empty string', 400);
+    }
+
+    if (code !== undefined) {
+        if (typeof code !== 'string' || !code.trim()) {
+            throw new AppError('code must be a non-empty string', 400);
+        }
+        if (code.trim().toUpperCase().length !== 2) {
+            throw new AppError('code must be a 2-letter state code', 400);
+        }
+    }
+
+    if (available !== undefined && typeof available !== 'boolean') {
+        throw new AppError('available must be true or false', 400);
+    }
+};
+
+const createState = async (data) => {
+    validateStatePayload(data, true);
+
+    const state = data.state.trim();
+    const code = data.code.trim().toUpperCase();
+    const available = data.available !== undefined ? data.available : true;
+
+    const existing = await StateAvailability.findOne({
+        isActive: true,
+        $or: [{ state }, { code }]
+    });
+
+    if (existing) {
+        throw new AppError('State or code already exists', 409);
+    }
+
+    const created = await StateAvailability.create({
+        state,
+        code,
+        available,
+        isActive: true
+    });
+
+    return created.toObject();
+};
+
+const updateStateById = async (id, data) => {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new AppError('Invalid state ID', 400);
+    }
+
+    validateStatePayload(data, false);
+
+    const stateDoc = await StateAvailability.findOne({ _id: id, isActive: true });
+    if (!stateDoc) {
+        throw new AppError('State not found', 404);
+    }
+
+    const nextState = data.state !== undefined ? data.state.trim() : stateDoc.state;
+    const nextCode = data.code !== undefined ? data.code.trim().toUpperCase() : stateDoc.code;
+
+    if (data.state !== undefined || data.code !== undefined) {
+        const conflict = await StateAvailability.findOne({
+            _id: { $ne: id },
+            isActive: true,
+            $or: [{ state: nextState }, { code: nextCode }]
+        });
+
+        if (conflict) {
+            throw new AppError('State or code already exists', 409);
+        }
+    }
+
+    if (data.state !== undefined) stateDoc.state = nextState;
+    if (data.code !== undefined) stateDoc.code = nextCode;
+    if (data.available !== undefined) stateDoc.available = data.available;
+
+    await stateDoc.save();
+    return stateDoc.toObject();
+};
+
+const deleteStateById = async (id) => {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new AppError('Invalid state ID', 400);
+    }
+
+    const stateDoc = await StateAvailability.findOneAndUpdate(
+        { _id: id, isActive: true },
+        { $set: { isActive: false } },
+        { new: true }
+    );
+
+    if (!stateDoc) {
+        throw new AppError('State not found', 404);
+    }
+
+    return stateDoc.toObject();
 };
 
 // Get active content
@@ -117,7 +226,12 @@ const updateContent = async (contentData) => {
 
 module.exports = {
     getAllStates,
+    getAllStatesForAdmin,
     getActiveContent,
+    seedStatesIfEmpty,
+    createState,
+    updateStateById,
+    deleteStateById,
     updateStateAvailability,
     bulkUpdateStates,
     updateContent,

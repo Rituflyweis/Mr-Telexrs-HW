@@ -1,30 +1,16 @@
 <claude-mem-context>
 # Memory Context
 
-# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-04-29 5:25pm GMT+5:30
+# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-04-29 6:52pm GMT+5:30
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (18,019t read) | 518,707t work | 97% savings
+Stats: 50 obs (18,586t read) | 536,451t work | 97% savings
 
-### Apr 28, 2026
-4 7:36p 🔴 Removed entire preferredPharmacy handling block from saveMedicalQuestions service
-5 7:37p 🔴 Removed orphaned preferredPharmacy key from medicalQuestionsData object in service
-6 7:41p 🔄 preferredPharmacy fully removed from active service code — only commented block remains
-7 7:56p 🔵 Twilio OTP system architecture — SMS + email dual delivery with hardcoded fallback bypass
-8 " 🔵 auth.service.js exposes OTP code in forgotPassword response — security issue
-9 " 🚨 Real production credentials committed in plaintext .env file
-10 7:57p 🔵 User model phoneNumber schema — unique sparse index, required only for non-social logins
-11 " 🔴 Added E.164 phone number formatter and countryCode fetch to fix Twilio SMS delivery
-12 8:10p 🔴 E.164 phone formatting applied to sendOtp and sendLoginOtp SMS calls
-13 " 🔴 E.164 formatting applied to sendLoginOtp; sendPasswordResetOtp user query extended for E.164
-14 8:11p 🔴 verifyOtp bypass removed — real OTP code and expiry validation now enforced
 ### Apr 29, 2026
-19 1:31p 🔵 OTP Login Endpoint Failing in Production
-20 " 🔵 OTP Login Flow Architecture — Mr-Telerxs Backend
-21 " 🔵 SMS Service Silent Mock — Root Cause of OTP Not Delivered
+21 1:31p 🔵 SMS Service Silent Mock — Root Cause of OTP Not Delivered
 22 1:32p 🔵 Debug console.log Left in verifyPassword + User Model Structure
 23 " 🔴 Removed Silent OTP Fallback — sendLoginOtp Now Throws on Delivery Failure
 24 1:33p 🔴 Registration OTP Fallback Also Replaced with AppError 500
@@ -70,7 +56,20 @@ S18 Consolidate US state management onto single /patient/states endpoint — ret
 71 " 🔵 createOrder Cart-to-Order Item Mapping Confirmed: condition/symptoms Explicitly Absent
 72 " 🔵 Doctor Dashboard getRecentConsultations Uses Symptoms as Primary Condition Source
 73 5:11p 🔵 Doctor Panel — Order-Based Condition/Symptoms Visibility Scope
+75 5:15p 🔵 Cart Item Drops `isConsented` Field — Not Persisted in Cart Model
 74 5:21p 🟣 Order-Based Condition/Symptoms Now Surfaces in All Three Doctor Consultation Endpoints
+76 5:25p 🔵 `isConsented` Missing from Cart Model Schema — Silently Dropped on Add-to-Cart
+77 " 🔴 `isConsented` Added to Cart Item Schema
+78 5:26p 🔴 `isConsented` Propagation — Cart Validation and Schema Patched
+79 " 🔴 `isConsented` Wired Through cart.service.js — Plus Existing-Item Update Logic Improved
+80 " 🔴 `isConsented` Now Persisted Through Full Order Pipeline — Schema and Snapshot Logic Updated
+81 " 🔴 `isConsented` Wired Through `reorder` and `createRefillOrder` Paths
+82 5:27p 🔴 `isConsented` Pipeline Complete — All Four Order Creation Paths Wired
+83 " 🔴 `isConsented` Validation Added to Order Validation — Full Pipeline Now Complete
+84 " 🔴 `isConsented` Added to Doctor Consultation MongoDB Projection
+85 " 🔵 `isConsented` Implementation Verified — All 7 Files Pass Syntax and Whitespace Checks
+86 " 🟣 Complete `isConsented` + Condition/Symptoms Feature — 8-File Change Set Finalized
+87 " 🔵 Patient `medicalHistory` and `allergies` Return as Empty Arrays in Prescription Response
 
-Access 519k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 536k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>
