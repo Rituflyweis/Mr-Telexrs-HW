@@ -1,4 +1,4 @@
-// All 50 US states with their codes
+// All 50 US states + District of Columbia
 const ALL_US_STATES = [
     { state: "Alabama", code: "AL" },
     { state: "Alaska", code: "AK" },
@@ -49,7 +49,8 @@ const ALL_US_STATES = [
     { state: "Washington", code: "WA" },
     { state: "West Virginia", code: "WV" },
     { state: "Wisconsin", code: "WI" },
-    { state: "Wyoming", code: "WY" }
+    { state: "Wyoming", code: "WY" },
+    { state: "District of Columbia", code: "DC" }
 ];
 
 module.exports = {

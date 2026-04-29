@@ -19,13 +19,6 @@ router.use('/health', require('../modules/health/health.routes'));
 router.use('/newsletter', require('../modules/newsletter/newsletter.routes'));
 
 /* =======================
-   US STATES ROUTES
-   Patient: dropdown/list for checkout
-   Admin/Sub-Admin: CRUD + availability toggle
-======================= */
-router.use('/', require('../modules/us-state/us-state.routes'));
-
-/* =======================
    FOOTER MANAGEMENT ROUTES (Must come before /admin to avoid route conflicts)
    Public: GET routes (view published sections)
    Admin/Sub-Admin: POST, PUT, DELETE routes (full CRUD)

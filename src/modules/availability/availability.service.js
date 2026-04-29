@@ -2,25 +2,21 @@ const StateAvailability = require('../../models/StateAvailability.model');
 const AvailabilityContent = require('../../models/AvailabilityContent.model');
 const {ALL_US_STATES} = require('../../constants/states');
 
-// Get all states with availability status
+// Seed DB with all US states (available: true) if empty
+const seedStatesIfEmpty = async () => {
+    const count = await StateAvailability.countDocuments();
+    if (count === 0) {
+        await StateAvailability.insertMany(
+            ALL_US_STATES.map(s => ({ state: s.state, code: s.code, available: true, isActive: true }))
+        );
+    }
+};
+
+// Get all states — DB is single source of truth
 const getAllStates = async () => {
-    // Get all states from database with their availability
-    const availableStates = await StateAvailability.find({ isActive: true });
-    
-    // Create a map for quick lookup
-    const availabilityMap = new Map();
-    availableStates.forEach(state => {
-        availabilityMap.set(state.state, state.available);
-    });
-    
-    // Merge all states with their availability status
-    const statesWithAvailability = ALL_US_STATES.map(state => ({
-        state: state.state,
-        code: state.code,
-        available: availabilityMap.get(state.state) || false
-    }));
-    
-    return statesWithAvailability;
+    await seedStatesIfEmpty();
+    const states = await StateAvailability.find({ isActive: true }).sort({ state: 1 }).lean();
+    return states.map(s => ({ state: s.state, code: s.code, available: s.available }));
 };
 
 // Get active content
