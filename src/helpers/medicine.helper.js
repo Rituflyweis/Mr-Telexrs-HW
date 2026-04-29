@@ -87,6 +87,15 @@ const normalizeHealthTypeValues = (value) => {
       return;
     }
 
+    if (typeof item === 'object' && !Array.isArray(item)) {
+      const normalizedFromObject = item.slug || item._id || item.id;
+      if (normalizedFromObject !== undefined && normalizedFromObject !== null) {
+        const normalizedString = String(normalizedFromObject).trim();
+        if (normalizedString) values.push(normalizedString);
+      }
+      return;
+    }
+
     const stringValue = String(item).trim();
     if (stringValue) values.push(stringValue);
   });
@@ -221,18 +230,29 @@ const validateHealthCategory = async (categoryId, typeSlugOrId) => {
   let healthTypeId = undefined;
   let actualHealthTypeSlug = undefined;
 
-  if (!categoryId) {
+  let normalizedCategoryId = categoryId;
+  if (typeof normalizedCategoryId === 'string') {
+    normalizedCategoryId = normalizedCategoryId.trim();
+  } else if (normalizedCategoryId && typeof normalizedCategoryId === 'object' && !Array.isArray(normalizedCategoryId)) {
+    normalizedCategoryId = normalizedCategoryId._id || normalizedCategoryId.id || normalizedCategoryId.slug;
+    if (typeof normalizedCategoryId === 'string') {
+      normalizedCategoryId = normalizedCategoryId.trim();
+    }
+  }
+
+  if (!normalizedCategoryId) {
     if (healthTypeValues && healthTypeValues.length > 0) {
       throw new AppError('Category is required when subCategory is provided', 400);
     }
     return { healthTypeId, healthTypeSlug: actualHealthTypeSlug, healthCategory: undefined };
   }
 
-  if (!mongoose.Types.ObjectId.isValid(categoryId)) {
-    throw new AppError('Invalid category ID', 400);
+  let healthCategory = null;
+  if (mongoose.Types.ObjectId.isValid(normalizedCategoryId)) {
+    healthCategory = await HealthCategory.findById(normalizedCategoryId);
+  } else if (typeof normalizedCategoryId === 'string') {
+    healthCategory = await HealthCategory.findOne({ slug: normalizedCategoryId });
   }
-
-  const healthCategory = await HealthCategory.findById(categoryId);
   if (!healthCategory || !healthCategory.isActive) {
     throw new AppError('Category not found or inactive', 404);
   }
@@ -269,7 +289,7 @@ const validateHealthCategory = async (categoryId, typeSlugOrId) => {
     }
   }
 
-  return { healthTypeId, healthTypeSlug: actualHealthTypeSlug, healthCategory: categoryId };
+  return { healthTypeId, healthTypeSlug: actualHealthTypeSlug, healthCategory: healthCategory._id };
 };
 
 // ============ IMAGE HANDLING HELPERS ============

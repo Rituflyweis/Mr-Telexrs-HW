@@ -28,6 +28,15 @@ const normalizeHealthTypeValues = (value) => {
       return;
     }
 
+    if (typeof item === 'object' && !Array.isArray(item)) {
+      const normalizedFromObject = item.slug || item._id || item.id;
+      if (normalizedFromObject !== undefined && normalizedFromObject !== null) {
+        const normalizedString = String(normalizedFromObject).trim();
+        if (normalizedString) values.push(normalizedString);
+      }
+      return;
+    }
+
     const stringValue = String(item).trim();
     if (stringValue) values.push(stringValue);
   });
@@ -41,9 +50,43 @@ const isSlugOrObjectId = (value) => {
   return isObjectId || isSlug;
 };
 
+const hasCategoryValue = (value) => {
+  if (value === undefined || value === null) return false;
+  if (typeof value === 'string') return value.trim().length > 0;
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    return Boolean(value._id || value.id || value.slug);
+  }
+  return false;
+};
+
+const validateHealthCategoryValue = (value) => {
+  if (value === undefined || value === null) return true;
+
+  const parsed = parseIfString(value);
+  let normalized = parsed;
+  if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+    normalized = parsed._id || parsed.id || parsed.slug;
+  }
+
+  if (normalized === undefined || normalized === null) {
+    throw new Error('Health category must be a valid MongoDB ID or slug');
+  }
+
+  const normalizedString = String(normalized).trim();
+  if (!normalizedString) {
+    throw new Error('Health category must be a valid MongoDB ID or slug');
+  }
+
+  if (!isSlugOrObjectId(normalizedString)) {
+    throw new Error('Health category must be a valid MongoDB ID or slug');
+  }
+
+  return true;
+};
+
 const validateHealthTypeValues = (value, { req }, fieldName) => {
   const values = normalizeHealthTypeValues(value);
-  const categoryMissing = !req.body.category && !req.body.healthCategory;
+  const categoryMissing = !hasCategoryValue(req.body.category) && !hasCategoryValue(req.body.healthCategory);
 
   if (values.length > 0 && req.method !== 'PUT' && categoryMissing) {
     throw new Error(`Category (or healthCategory) is required when ${fieldName} is provided`);
@@ -238,8 +281,14 @@ exports.addMedicineValidation = [
   // subCategory = Health Type Slug (from category's types array)
   body('category')
     .optional()
-    .isMongoId()
-    .withMessage('Category ID must be a valid MongoDB ObjectId'),
+    .custom((value) => {
+      if (value === undefined || value === null || value === '') return true;
+      if (typeof value === 'object' && !Array.isArray(value)) {
+        return validateHealthCategoryValue(value);
+      }
+      return true;
+    })
+    .withMessage('Category must be a valid value'),
   
   body('subCategory')
     .optional()
@@ -252,8 +301,8 @@ exports.addMedicineValidation = [
   // healthTypeSlug/subCategory must be one of the types within the selected healthCategory/category
   body('healthCategory')
     .optional()
-    .isMongoId()
-    .withMessage('Health category ID must be a valid MongoDB ID'),
+    .custom((value) => validateHealthCategoryValue(value))
+    .withMessage('Health category must be a valid MongoDB ID or slug'),
   
   body('healthTypeSlug')
     .optional()
