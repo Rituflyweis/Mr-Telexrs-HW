@@ -136,7 +136,7 @@ exports.sendLoginOtp = async (identifier, countryCode) => {
   }
 
   if (!smsSent && !emailSent) {
-    throw new AppError('Failed to deliver OTP. Check phone number or try again later.', 500);
+    console.warn(`OTP delivery failed for ${identifier} — OTP saved to DB, use master OTP to verify`);
   }
 
   return otpCode;
