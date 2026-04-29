@@ -29,6 +29,38 @@ const getShippingChargesForItems = (items = []) => {
   return hasShippableItems(items) ? DEFAULT_SHIPPING_CHARGES : 0;
 };
 
+const toCleanStringArray = (value) => {
+  if (Array.isArray(value)) {
+    return value
+      .flatMap(item => toCleanStringArray(item))
+      .filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+};
+
+const uniqueValues = (values = []) => [...new Set(values.filter(Boolean))];
+
+const getOrderMedicalSnapshot = (data = {}, items = []) => {
+  const itemConditions = items.flatMap(item => toCleanStringArray(item.condition));
+  const itemSymptoms = items.flatMap(item => toCleanStringArray(item.symptoms));
+  const conditions = uniqueValues([...toCleanStringArray(data.condition), ...itemConditions]);
+  const symptoms = uniqueValues([...toCleanStringArray(data.symptoms), ...itemSymptoms]);
+
+  return {
+    condition: conditions.length > 0 ? conditions.join(', ') : undefined,
+    symptoms,
+    isConsented: data.isConsented === true || items.some(item => item.isConsented === true)
+  };
+};
+
 /**
  * Finalize order after payment success:
  * - record coupon usage (idempotent)
@@ -444,7 +476,10 @@ exports.reorder = async (userId, orderId) => {
     dosage: item.dosage,
     dosageOption: item.dosageOption || null,
     quantityOption: item.quantityOption || null,
-    generics: item.generics || []
+    generics: item.generics || [],
+    condition: item.condition,
+    symptoms: toCleanStringArray(item.symptoms),
+    isConsented: item.isConsented || false
   }));
 
   const subtotal = newItems.reduce((sum, item) => sum + item.totalPrice, 0);
@@ -453,6 +488,7 @@ exports.reorder = async (userId, orderId) => {
   // subtotal * 0.18;
   const shippingCharges = getShippingChargesForItems(newItems);
   const totalAmount = subtotal + shippingCharges + tax + consultantFees;
+  const medicalSnapshot = getOrderMedicalSnapshot(originalOrder, newItems);
 
   const newOrder = await Order.create({
     patient: patient._id,
@@ -461,6 +497,9 @@ exports.reorder = async (userId, orderId) => {
     shippingAddress: originalOrder.shippingAddress._id || originalOrder.shippingAddress,
     billingAddress: originalOrder.billingAddress || null,
     billingAddressSameAsShipping: originalOrder.billingAddressSameAsShipping !== false,
+    condition: medicalSnapshot.condition,
+    symptoms: medicalSnapshot.symptoms,
+    isConsented: medicalSnapshot.isConsented,
     subtotal, shippingCharges, tax, consultantFees, discount: 0, totalAmount,
     status: 'pending',
     notes: `Reordered from order ${originalOrder.orderNumber}`
@@ -581,7 +620,10 @@ exports.createRefillOrder = async (userId, data) => {
     dosage: data.dosage || null,
     dosageOption: null,
     quantityOption: null,
-    generics: []
+    generics: [],
+    condition: data.condition,
+    symptoms: toCleanStringArray(data.symptoms),
+    isConsented: data.isConsented || false
   };
 
   const items = [refillProduct];
@@ -590,6 +632,7 @@ exports.createRefillOrder = async (userId, data) => {
   const shippingCharges = getShippingChargesForItems(items);
   const tax = data.tax ?? 0;
   const discount = data.discount ?? 0;
+  const medicalSnapshot = getOrderMedicalSnapshot(data, items);
 
   const totalAmount = subtotal + shippingCharges + tax - discount;
 
@@ -672,6 +715,9 @@ exports.createRefillOrder = async (userId, data) => {
     shippingAddress: address._id,
     billingAddress: billingAddress,
     billingAddressSameAsShipping: billingAddressSameAsShipping,
+    condition: medicalSnapshot.condition,
+    symptoms: medicalSnapshot.symptoms,
+    isConsented: medicalSnapshot.isConsented,
     subtotal,
     shippingCharges,
     tax,
@@ -752,7 +798,10 @@ exports.createOrder = async (userId, data) => {
           totalPrice: item.totalPrice,
           status: 'ordered',
           dosageOption: item.dosageOption || null,
-          quantityOption: item.quantityOption || null
+          quantityOption: item.quantityOption || null,
+          condition: item.condition,
+          symptoms: toCleanStringArray(item.symptoms),
+          isConsented: item.isConsented || false
         };
 
         // If it's a medication, fetch full product details
@@ -931,7 +980,10 @@ exports.createOrder = async (userId, data) => {
           dosage: item.dosage,
           dosageOption: item.dosageOption || null,
           quantityOption: item.quantityOption || null,
-          generics: item.generics || []
+          generics: item.generics || [],
+          condition: item.condition,
+          symptoms: toCleanStringArray(item.symptoms),
+          isConsented: item.isConsented || false
         };
       });
 
@@ -949,6 +1001,7 @@ exports.createOrder = async (userId, data) => {
     discount = data.discount || 0;
   }
 
+  const medicalSnapshot = getOrderMedicalSnapshot(data, items);
   const totalAmount = data.totalAmount || (subtotal + shippingCharges + tax + consultantFees - discount);
 
   // Handle shipping address - can be provided as object or ID
@@ -1037,6 +1090,9 @@ exports.createOrder = async (userId, data) => {
     shippingAddress: address._id,
     billingAddress: billingAddress,
     billingAddressSameAsShipping: billingAddressSameAsShipping,
+    condition: medicalSnapshot.condition,
+    symptoms: medicalSnapshot.symptoms,
+    isConsented: medicalSnapshot.isConsented,
     subtotal,
     shippingCharges,
     tax,

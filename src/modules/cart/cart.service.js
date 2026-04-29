@@ -21,6 +21,25 @@ const getOrCreateCart = async (patientId) => {
   return cart;
 };
 
+const toCleanStringArray = (value) => {
+  if (Array.isArray(value)) {
+    return value
+      .flatMap(item => toCleanStringArray(item))
+      .filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+};
+
+const mergeStringArrays = (...values) => [...new Set(values.flatMap(toCleanStringArray))];
+
 /**
  * Get cart with product details and patient info
  */
@@ -101,7 +120,7 @@ exports.addToCart = async (userId, data) => {
   const patient = await getPatient(userId, { lean: false });
   const cart = await getOrCreateCart(patient._id);
 
-  const { productId, productName, productImage, productType, quantity, unitPrice, dosageOption, quantityOption, isRefillEnabled, pharmacy, condition, symptoms } = data;
+  const { productId, productName, productImage, productType, quantity, unitPrice, dosageOption, quantityOption, isRefillEnabled, pharmacy, condition, symptoms, isConsented } = data;
 
   // Check if item already exists (same product + same dosage + same quantity option = same item)
   const existingItemIndex = cart.items.findIndex(
@@ -113,9 +132,16 @@ exports.addToCart = async (userId, data) => {
 
   if (existingItemIndex !== -1) {
     // Update quantity
-    cart.items[existingItemIndex].quantity += quantity || 1;
-    cart.items[existingItemIndex].totalPrice = 
-      cart.items[existingItemIndex].quantity * cart.items[existingItemIndex].unitPrice;
+    const existingItem = cart.items[existingItemIndex];
+    existingItem.quantity += quantity || 1;
+    existingItem.totalPrice = existingItem.quantity * existingItem.unitPrice;
+
+    if (condition) existingItem.condition = condition;
+    if (symptoms !== undefined) existingItem.symptoms = mergeStringArrays(existingItem.symptoms, symptoms);
+    if (pharmacy) existingItem.pharmacy = pharmacy;
+    if (productImage) existingItem.productImage = productImage;
+    if (isRefillEnabled !== undefined) existingItem.isRefillEnabled = isRefillEnabled;
+    if (isConsented !== undefined) existingItem.isConsented = isConsented;
   } else {
     // Add new item
     const totalPrice = (quantity || 1) * unitPrice;
@@ -132,7 +158,8 @@ exports.addToCart = async (userId, data) => {
       symptoms,
       dosageOption,
       quantityOption,
-      isRefillEnabled: isRefillEnabled || false
+      isRefillEnabled: isRefillEnabled || false,
+      isConsented: isConsented || false
     });
   }
 

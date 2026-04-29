@@ -51,7 +51,8 @@ exports.addToCartValidation = [
   body('quantityOption.name').optional().isString(),
   body('quantityOption.priceAdjustment').optional().isNumeric(),
 
-  body('isRefillEnabled').optional().isBoolean().withMessage('isRefillEnabled must be a boolean')
+  body('isRefillEnabled').optional().isBoolean().withMessage('isRefillEnabled must be a boolean'),
+  body('isConsented').optional().isBoolean().withMessage('isConsented must be a boolean')
 ];
 
 // Apply coupon validation
@@ -72,4 +73,3 @@ exports.updateQuantityValidation = [
     .isInt({ min: 1 })
     .withMessage('Quantity must be a positive integer')
 ];
-

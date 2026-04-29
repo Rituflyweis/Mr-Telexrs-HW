@@ -19,6 +19,73 @@ const {
 } = require('../../helpers');
 const Order = require('../../models/Order.model');
 
+const ORDER_CONSULTATION_PROJECTION = {
+  _id: 1,
+  status: 1,
+  hw_order_id: 1,
+  doctorApproved: 1,
+  condition: 1,
+  symptoms: 1,
+  isConsented: 1,
+  'items.medicationName': 1,
+  'items.dosage': 1,
+  'items.dosageOption': 1,
+  'items.quantityOption': 1,
+  'items.condition': 1,
+  'items.symptoms': 1,
+  'items.isConsented': 1
+};
+
+const toCleanStringArray = (value) => {
+  if (Array.isArray(value)) {
+    return value
+      .flatMap(item => toCleanStringArray(item))
+      .filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map(item => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+};
+
+const uniqueValues = (values = []) => [...new Set(values.filter(Boolean))];
+
+const getOrderMedicalSummary = (order) => {
+  if (!order) return {};
+
+  const itemConditions = (order.items || []).flatMap(item => toCleanStringArray(item.condition));
+  const itemSymptoms = (order.items || []).flatMap(item => toCleanStringArray(item.symptoms));
+  const conditions = uniqueValues([...toCleanStringArray(order.condition), ...itemConditions]);
+  const symptoms = uniqueValues([...toCleanStringArray(order.symptoms), ...itemSymptoms]);
+
+  return {
+    condition: conditions.length > 0 ? conditions.join(', ') : null,
+    symptoms: symptoms.length > 0 ? symptoms.join(', ') : null
+  };
+};
+
+const applyOrderMedicalSummary = (formatted, order) => {
+  const { condition, symptoms } = getOrderMedicalSummary(order);
+
+  if (condition) formatted.condition = condition;
+  if (symptoms) formatted.symptoms = symptoms;
+
+  return formatted;
+};
+
+const formatOrderMedicines = (order) => {
+  return order?.items?.map(item => ({
+    name: item.medicationName,
+    dosage: item.dosage || item.dosageOption?.name || null,
+    quantity: item.quantityOption?.name || null
+  })) || [];
+};
+
 /**
  * Get all consultations (no doctor filter - for admin)
  */
@@ -51,13 +118,23 @@ exports.getAllConsultations = async (query = {}) => {
       ...(query.doctorId ? { doctor: query.doctorId } : {}),
       $or: [
         { 'medicalQuestions.pastMedicalHistory': searchRegex },
+        { 'medicalQuestions.symptoms': searchRegex },
         { 'medicalQuestions.currentMedications': searchRegex },
         { 'basicInformation.firstName': searchRegex },
         { 'basicInformation.lastName': searchRegex }
       ]
     }).distinct('patient');
 
-    const allPatientIds = [...new Set([...patients, ...intakeFormsByMedical])];
+    const orderPatients = await Order.find({
+      $or: [
+        { condition: searchRegex },
+        { symptoms: searchRegex },
+        { 'items.condition': searchRegex },
+        { 'items.symptoms': searchRegex }
+      ]
+    }).distinct('patient');
+
+    const allPatientIds = [...new Set([...patients, ...intakeFormsByMedical, ...orderPatients])];
     filter.patient = allPatientIds.length > 0 ? { $in: allPatientIds } : { $in: [] };
   }
 
@@ -79,8 +156,16 @@ exports.getAllConsultations = async (query = {}) => {
     .lean();
 
   // Format consultations
-  const formattedConsultations = consultations.map(form => {
-    const formatted = formatConsultation(form);
+  const formattedConsultations = await Promise.all(consultations.map(async form => {
+    const order = form.patient?._id
+      ? await Order.findOne(
+        { patient: form.patient._id },
+        ORDER_CONSULTATION_PROJECTION
+      ).sort({ createdAt: -1 }).lean()
+      : null;
+    const formatted = applyOrderMedicalSummary(formatConsultation(form), order);
+    formatted.order = order;
+    formatted.medicines = formatOrderMedicines(order);
     if (form.doctor) {
       formatted.doctor = {
         id: form.doctor._id,
@@ -91,7 +176,7 @@ exports.getAllConsultations = async (query = {}) => {
       };
     }
     return formatted;
-  });
+  }));
 
   const total = await IntakeForm.countDocuments(filter);
 
@@ -129,12 +214,22 @@ exports.getConsultationsByDoctorId = async (doctorId, query = {}) => {
       doctor: doctorObjectId,
       $or: [
         { 'medicalQuestions.pastMedicalHistory': searchRegex },
+        { 'medicalQuestions.symptoms': searchRegex },
         { 'basicInformation.firstName': searchRegex },
         { 'basicInformation.lastName': searchRegex }
       ]
     }).distinct('patient');
 
-    const allPatientIds = [...new Set([...patients, ...intakeFormsByMedical])];
+    const orderPatients = await Order.find({
+      $or: [
+        { condition: searchRegex },
+        { symptoms: searchRegex },
+        { 'items.condition': searchRegex },
+        { 'items.symptoms': searchRegex }
+      ]
+    }).distinct('patient');
+
+    const allPatientIds = [...new Set([...patients, ...intakeFormsByMedical, ...orderPatients])];
     filter.patient = allPatientIds.length > 0 ? { $in: allPatientIds } : { $in: [] };
   }
 
@@ -149,29 +244,17 @@ exports.getConsultationsByDoctorId = async (doctorId, query = {}) => {
     .skip(skip)
     .limit(limit)
     .lean();
-  console.log("----------------------151--------------", consultations);
 
   const formattedConsultations = await Promise.all(consultations.map(async form => {
-    const order = await Order.findOne(
-      { patient: form.patient._id },
-      {
-        _id: 1,
-        status: 1,
-        hw_order_id: 1,
-        doctorApproved: 1,
-        'items.medicationName': 1,
-        'items.dosage': 1,
-        'items.dosageOption': 1,
-        'items.quantityOption': 1
-      }
-    ).sort({ createdAt: -1 });
-    const formatted = formatConsultation(form);
+    const order = form.patient?._id
+      ? await Order.findOne(
+        { patient: form.patient._id },
+        ORDER_CONSULTATION_PROJECTION
+      ).sort({ createdAt: -1 }).lean()
+      : null;
+    const formatted = applyOrderMedicalSummary(formatConsultation(form), order);
     formatted.order = order;
-    formatted.medicines = order?.items?.map(item => ({
-      name: item.medicationName,
-      dosage: item.dosage || item.dosageOption?.name || null,
-      quantity: item.quantityOption?.name || null
-    })) || [];
+    formatted.medicines = formatOrderMedicines(order);
     if (form.doctor) {
       formatted.doctor = {
         id: form.doctor._id,
@@ -246,6 +329,13 @@ exports.getConsultationById = async (userId, consultationId, doctorIdFromQuery =
   const age = calculateAge(dateOfBirth);
 
   const submittedDate = new Date(intakeForm.createdAt);
+  const order = intakeForm.patient?._id
+    ? await Order.findOne(
+      { patient: intakeForm.patient._id },
+      ORDER_CONSULTATION_PROJECTION
+    ).sort({ createdAt: -1 }).lean()
+    : null;
+  const orderMedicalSummary = getOrderMedicalSummary(order);
 
   return {
     id: intakeForm._id,
@@ -268,6 +358,14 @@ exports.getConsultationById = async (userId, consultationId, doctorIdFromQuery =
       allergies: intakeForm.patient?.allergies || [],
       emergencyContact: intakeForm.patient?.emergencyContact || intakeForm.emergencyContact
     },
+    condition: orderMedicalSummary.condition ||
+      intakeForm.medicalQuestions?.pastMedicalHistory?.join(', ') ||
+      'Not specified',
+    symptoms: orderMedicalSummary.symptoms ||
+      intakeForm.medicalQuestions?.symptoms?.join(', ') ||
+      'No symptoms listed',
+    order,
+    medicines: formatOrderMedicines(order),
     basicInformation: intakeForm.basicInformation || {},
     emergencyContact: intakeForm.emergencyContact || {},
     medicalQuestions: intakeForm.medicalQuestions || {},

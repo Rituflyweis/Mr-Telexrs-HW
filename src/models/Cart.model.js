@@ -53,6 +53,10 @@ const cartItemSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isConsented: {
+    type: Boolean,
+    default: false
+  },
   isSaved: {
     type: Boolean,
     default: false
@@ -143,4 +147,3 @@ cartSchema.pre('save', function (next) {
 });
 
 module.exports = mongoose.model('Cart', cartSchema);
-

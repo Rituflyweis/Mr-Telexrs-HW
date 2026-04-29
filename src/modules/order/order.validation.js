@@ -193,6 +193,50 @@ exports.createOrderValidation = [
     .withMessage('Total price is required for each item')
     .isFloat({ min: 0 })
     .withMessage('Total price must be a non-negative number'),
+
+  body('condition')
+    .optional()
+    .isString()
+    .withMessage('Condition must be a string'),
+
+  body('symptoms')
+    .optional()
+    .isArray()
+    .withMessage('Symptoms must be an array'),
+
+  body('symptoms.*')
+    .optional()
+    .isString()
+    .withMessage('Each symptom must be a string'),
+
+  body('items.*.condition')
+    .if(body('items').exists())
+    .optional()
+    .isString()
+    .withMessage('Item condition must be a string'),
+
+  body('items.*.symptoms')
+    .if(body('items').exists())
+    .optional()
+    .isArray()
+    .withMessage('Item symptoms must be an array'),
+
+  body('items.*.symptoms.*')
+    .if(body('items').exists())
+    .optional()
+    .isString()
+    .withMessage('Each item symptom must be a string'),
+
+  body('isConsented')
+    .optional()
+    .isBoolean()
+    .withMessage('isConsented must be a boolean'),
+
+  body('items.*.isConsented')
+    .if(body('items').exists())
+    .optional()
+    .isBoolean()
+    .withMessage('Item isConsented must be a boolean'),
   
   body('billingAddressSameAsShipping')
     .optional()
@@ -397,5 +441,3 @@ exports.updateOrderNotesValidation = [
     .isLength({ max: 1000 })
     .withMessage('Notes must be less than 1000 characters')
 ];
-
-

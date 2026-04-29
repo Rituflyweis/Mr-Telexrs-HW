@@ -65,6 +65,18 @@ const orderItemSchema = new mongoose.Schema(
       type: String,
       trim: true
     }],
+    condition: {
+      type: String,
+      trim: true
+    },
+    symptoms: {
+      type: [String],
+      default: []
+    },
+    isConsented: {
+      type: Boolean,
+      default: false
+    },
     // Order specific
     quantity: {
       type: Number,
@@ -119,6 +131,21 @@ const orderSchema = new mongoose.Schema(
         validator: (v) => Array.isArray(v) && v.length > 0,
         message: 'Order must have at least one item'
       }
+    },
+
+    condition: {
+      type: String,
+      trim: true
+    },
+
+    symptoms: {
+      type: [String],
+      default: []
+    },
+
+    isConsented: {
+      type: Boolean,
+      default: false
     },
 
     shippingAddress: {
