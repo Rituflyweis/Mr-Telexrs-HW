@@ -49,16 +49,10 @@ const buildIdentifierQuery = (identifier) => {
  */
 const buildIdentifierOrQuery = (identifier) => {
   const normalized = normalizeIdentifier(identifier);
-  const trimmed = identifier.trim();
-  const digitsOnly = trimmed.replace(/\D/g, '');
-  const phoneVariants = [trimmed];
-  if (digitsOnly !== trimmed) phoneVariants.push(digitsOnly);
-  if (!trimmed.startsWith('+')) phoneVariants.push(`+${digitsOnly}`);
-
   return {
     $or: [
       { email: normalized },
-      ...phoneVariants.map(p => ({ phoneNumber: p }))
+      { phoneNumber: identifier.trim() }
     ]
   };
 };
