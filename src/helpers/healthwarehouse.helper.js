@@ -172,7 +172,13 @@ const createCustomer = async (user, patient, addressData) => {
     }
   };
 
-  console.log(payload)
+  const addr = payload.customer.billing_addresses[0];
+  console.log('[HW createCustomer] payload:', JSON.stringify(payload, null, 2));
+  console.log('[HW createCustomer] address state value:', JSON.stringify(addr?.state), '| city:', addr?.city, '| postal_code:', addr?.postal_code, '| country:', addr?.country);
+
+  if (!addr?.state) {
+    throw new Error(`HW createCustomer aborted: state is missing in address (got: ${JSON.stringify(addr?.state)})`);
+  }
 
   const response = await HW.createCustomer(payload);
 

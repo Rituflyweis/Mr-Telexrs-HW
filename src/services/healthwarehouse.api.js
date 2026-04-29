@@ -35,6 +35,7 @@ const createCustomer = (customerData) => {
         })
         .catch((error) => {
             console.error('HealthWarehouse Create Customer API Error:', error.response?.data || error.message);
+            console.error('HW Create Customer — sent payload:', JSON.stringify(customerData, null, 2));
             throw error;
         });
 };
