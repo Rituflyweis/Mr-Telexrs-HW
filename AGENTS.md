@@ -1,31 +1,19 @@
 <claude-mem-context>
 # Memory Context
 
-# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-04-29 9:56pm GMT+5:30
+# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-04-30 1:24am GMT+5:30
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (18,586t read) | 536,451t work | 97% savings
+Stats: 50 obs (19,291t read) | 1,207,785t work | 98% savings
 
 ### Apr 29, 2026
-21 1:31p 🔵 SMS Service Silent Mock — Root Cause of OTP Not Delivered
-22 1:32p 🔵 Debug console.log Left in verifyPassword + User Model Structure
-23 " 🔴 Removed Silent OTP Fallback — sendLoginOtp Now Throws on Delivery Failure
-24 1:33p 🔴 Registration OTP Fallback Also Replaced with AppError 500
-25 1:34p 🔴 buildIdentifierOrQuery Enhanced to Match Phone Number Format Variants
-26 1:39p 🔵 Email Service Has Same Silent-Success Anti-Pattern as SMS Service
-27 1:40p 🔴 Email Service sendOtpEmail Now Throws on Failure Instead of Returning Silent Error
 S13 Improve error handling for HealthWarehouse customer creation to surface better diagnostic info (Apr 29 at 1:41 PM)
-28 2:11p 🔵 HealthWarehouse Customer Creation Failing — Invalid State in Address
 S9 HealthWarehouse customer creation error — diagnosed "missing or invalid state in customer address" 400 causing prescription order 500 (Apr 29 at 2:11 PM)
 S10 Add master OTP "000000" to bypass Twilio trial account SMS limitations across all auth flows (Apr 29 at 2:11 PM)
-29 2:33p 🟣 Master OTP Bypass for Twilio Trial Account Limitation
-30 " 🔵 OTP Service Architecture — Mr-Telerxs-N Backend
 S11 Revert phone number validation regression from last commit that broke login screen phone submission (Apr 29 at 2:33 PM)
-31 2:37p 🔵 Last Commit Includes Phone Identifier Query Changes That Break Login
-32 " 🔵 buildIdentifierOrQuery Phone Variant Expansion — Exact Diff Found
 S12 Fix login-otp returning 500 due to both Twilio SMS and Gmail SMTP failing in production (Apr 29 at 2:37 PM)
 33 2:41p 🔵 Production OTP Delivery Fully Broken — Both Twilio SMS and Gmail SMTP Failing
 34 " 🔴 sendLoginOtp No Longer Throws 500 When All Delivery Channels Fail
@@ -70,6 +58,19 @@ S18 Consolidate US state management onto single /patient/states endpoint — ret
 85 " 🔵 `isConsented` Implementation Verified — All 7 Files Pass Syntax and Whitespace Checks
 86 " 🟣 Complete `isConsented` + Condition/Symptoms Feature — 8-File Change Set Finalized
 87 " 🔵 Patient `medicalHistory` and `allergies` Return as Empty Arrays in Prescription Response
+88 7:11p 🔵 Medicine PUT API Rejects Frontend Payload — Populated Objects Sent Back
+89 " 🔴 Medicine Validation Now Accepts Populated Object Forms for subCategory and healthCategory
+90 " 🔵 Production Health Category Data — MEN'S HEALTH Slug and Types
+91 10:00p 🔵 Production medicines list endpoint returns 422 — fix not deployed
+92 11:12p 🔵 Production medicines list: limit capped at 100, pagination works, candidate found
+93 11:13p 🔵 Production add/remove subcategory test passed — healthTypeSlug is a full replace operation
+94 11:14p ✅ Fix committed to git — medicine validation fix on branch main
+95 " 🔵 Medicine API architecture — full route, field alias, and filter map
+### Apr 30, 2026
+96 12:19a 🟣 Medicine Multi-HealthTypeSlug Test Runbook Created
+97 12:29a 🔴 Runbook Step 8.1 Corrupted JWT Token Fixed
+98 12:30a ✅ Runbook PUT Payloads Expanded to Full GET Response Mirror
+99 12:31a ✅ Runbook Finalized: Full 483-Line File Verified
 
-Access 536k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 1208k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>

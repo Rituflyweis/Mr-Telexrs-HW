@@ -14,7 +14,7 @@ router.post('/intake-form/emergency-contact', auth, emergencyContactValidation, 
 router.post('/intake-form/medical-questions', auth, medicalQuestionsValidation, validate, controller.saveMedicalQuestions);
 
 // Submit consultation (book consultation)
-router.post('/intake-form/submit', auth, controller.submitConsultation);
+router.post('/intake-form/submit', auth, submitConsultationValidation, validate, controller.submitConsultation);
 
 // Legacy endpoints (for backward compatibility)
 router.post('/intake-form', auth, controller.createIntakeForm);
@@ -32,4 +32,3 @@ router.put('/intakeFormNotes/:id', intakeFormNotes.updateNote);
 router.get('/intakeForm/Notes/All', intakeFormNotes.getNotes);
 
 module.exports = router;
-

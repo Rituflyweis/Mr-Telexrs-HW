@@ -6,6 +6,69 @@ const logger = require('../../utils/logger');
 const healthwarehouse = require('../../helpers/healthwarehouse.helper');
 const mongoose = require('mongoose');
 
+const BASIC_INFORMATION_REQUIRED_FIELDS = ['firstName', 'lastName', 'sex', 'dateOfBirth'];
+const EMERGENCY_CONTACT_REQUIRED_FIELDS = ['relationship', 'firstName', 'lastName', 'phone'];
+
+const hasValue = (value) => {
+  if (value === undefined || value === null) return false;
+  if (typeof value === 'string') return value.trim() !== '';
+  return true;
+};
+
+const getMissingRequiredFields = (payload = {}, requiredFields = []) =>
+  requiredFields.filter((field) => !hasValue(payload?.[field]));
+
+const computeMedicalQuestionsCompleteness = (medicalQuestions = {}) => (
+  (Array.isArray(medicalQuestions.pastMedicalHistory) && medicalQuestions.pastMedicalHistory.length > 0) ||
+  (Array.isArray(medicalQuestions.currentMedications) && medicalQuestions.currentMedications.length > 0) ||
+  (Array.isArray(medicalQuestions.medicationAllergies) && medicalQuestions.medicationAllergies.length > 0) ||
+  hasValue(medicalQuestions.howDidYouHearAboutUs)
+);
+
+const computeIntakeFormCompleteness = (intakeForm = {}) => {
+  const basicInformation = intakeForm.basicInformation || {};
+  const emergencyContact = intakeForm.emergencyContact || {};
+  const medicalQuestions = intakeForm.medicalQuestions || {};
+
+  const basicInfoMissingFields = getMissingRequiredFields(
+    basicInformation,
+    BASIC_INFORMATION_REQUIRED_FIELDS
+  );
+  const emergencyContactMissingFields = getMissingRequiredFields(
+    emergencyContact,
+    EMERGENCY_CONTACT_REQUIRED_FIELDS
+  );
+  const isMedicalQuestionsComplete = computeMedicalQuestionsCompleteness(medicalQuestions);
+
+  const missingSections = [];
+  if (basicInfoMissingFields.length) {
+    missingSections.push({
+      section: 'basicInformation',
+      missingFields: basicInfoMissingFields
+    });
+  }
+  if (emergencyContactMissingFields.length) {
+    missingSections.push({
+      section: 'emergencyContact',
+      missingFields: emergencyContactMissingFields
+    });
+  }
+  if (!isMedicalQuestionsComplete) {
+    missingSections.push({
+      section: 'medicalQuestions',
+      missingFields: ['At least one medical question response is required']
+    });
+  }
+
+  return {
+    isBasicInfoComplete: basicInfoMissingFields.length === 0,
+    isEmergencyContactComplete: emergencyContactMissingFields.length === 0,
+    isMedicalQuestionsComplete,
+    isComplete: missingSections.length === 0,
+    missingSections
+  };
+};
+
 // Get patient from userId - create if doesn't exist
 const getPatient = async (userId) => {
   let patient = await Patient.findOne({ user: userId }).populate('user');
@@ -41,12 +104,15 @@ exports.saveBasicInformation = async (userId, data) => {
   const patient = await getPatient(userId);
   let intakeForm = await IntakeForm.findOne({ patient: patient._id });
 
-  // Check if required fields are present
-  const requiredFields = ['firstName', 'lastName', 'sex', 'dateOfBirth', 'email', 'phone', 'address', 'city', 'state', 'zip'];
-  const isComplete = requiredFields.every(field => data[field] !== undefined && data[field] !== null && data[field] !== '');
+  const existingBasicInformation = intakeForm?.basicInformation?.toObject?.() || {};
+  const mergedBasicInformation = { ...existingBasicInformation, ...data };
+  const isComplete = getMissingRequiredFields(
+    mergedBasicInformation,
+    BASIC_INFORMATION_REQUIRED_FIELDS
+  ).length === 0;
 
   const basicInfoData = {
-    ...data,
+    ...mergedBasicInformation,
     isBasicInfoComplete: isComplete
   };
 
@@ -80,12 +146,15 @@ exports.saveEmergencyContact = async (userId, data) => {
   const patient = await getPatient(userId);
   let intakeForm = await IntakeForm.findOne({ patient: patient._id });
 
-  // Check if required fields are present
-  const requiredFields = ['relationship', 'firstName', 'lastName', 'phone', 'address', 'city', 'state', 'zip'];
-  const isComplete = requiredFields.every(field => data[field] !== undefined && data[field] !== null && data[field] !== '');
+  const existingEmergencyContact = intakeForm?.emergencyContact?.toObject?.() || {};
+  const mergedEmergencyContact = { ...existingEmergencyContact, ...data };
+  const isComplete = getMissingRequiredFields(
+    mergedEmergencyContact,
+    EMERGENCY_CONTACT_REQUIRED_FIELDS
+  ).length === 0;
 
   const emergencyContactData = {
-    ...data,
+    ...mergedEmergencyContact,
     isEmergencyContactComplete: isComplete
   };
 
@@ -139,13 +208,7 @@ exports.saveMedicalQuestions = async (userId, data) => {
       : (intakeForm?.medicalQuestions?.howDidYouHearAboutUs || '')
   };
 
-  // Check if required fields are present (at least one should be filled)
-  const hasData = medicalQuestionsData.pastMedicalHistory?.length > 0 ||
-    medicalQuestionsData.currentMedications?.length > 0 ||
-    medicalQuestionsData.medicationAllergies?.length > 0 ||
-    medicalQuestionsData.howDidYouHearAboutUs;
-
-  medicalQuestionsData.isMedicalQuestionsComplete = hasData;
+  medicalQuestionsData.isMedicalQuestionsComplete = computeMedicalQuestionsCompleteness(medicalQuestionsData);
 
   if (!intakeForm) {
     intakeForm = await IntakeForm.create({
@@ -203,14 +266,30 @@ exports.submitConsultation = async (userId, doctorId) => {
     }
   }
 
-  const isComplete =
-    intakeForm.basicInformation?.isBasicInfoComplete &&
-    intakeForm.emergencyContact?.isEmergencyContactComplete &&
-    intakeForm.medicalQuestions?.isMedicalQuestionsComplete;
-  intakeForm.medicalQuestions?.isMedicalQuestionsComplete;
-  if (!isComplete) {
+  const completeness = computeIntakeFormCompleteness(intakeForm);
+
+  if (!completeness.isComplete) {
+    logger.warn('Intake form submission blocked due to incomplete sections', {
+      patientId: String(patient._id),
+      intakeFormId: String(intakeForm._id),
+      userId: String(userId),
+      missingSections: completeness.missingSections
+    });
     throw new AppError('Please complete all sections of the intake form before submitting.', 400);
   }
+
+  intakeForm.basicInformation = {
+    ...(intakeForm.basicInformation?.toObject?.() || {}),
+    isBasicInfoComplete: completeness.isBasicInfoComplete
+  };
+  intakeForm.emergencyContact = {
+    ...(intakeForm.emergencyContact?.toObject?.() || {}),
+    isEmergencyContactComplete: completeness.isEmergencyContactComplete
+  };
+  intakeForm.medicalQuestions = {
+    ...(intakeForm.medicalQuestions?.toObject?.() || {}),
+    isMedicalQuestionsComplete: completeness.isMedicalQuestionsComplete
+  };
 
   // Check if already submitted
   if (intakeForm.status === 'submitted') {
