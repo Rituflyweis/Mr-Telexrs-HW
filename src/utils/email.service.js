@@ -65,9 +65,7 @@ exports.sendOtpEmail = async (email, otpCode, type = 'login') => {
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('Email sending error:', error);
-    // Don't throw error - log to console as fallback
-    console.log(`📧 OTP Email to ${email} (${type}): ${otpCode}`);
-    return { success: false, error: error.message };
+    throw error;
   }
 };
 exports.sendEmailWithAttachment = async (email, noteData) => {

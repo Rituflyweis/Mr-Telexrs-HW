@@ -49,10 +49,16 @@ const buildIdentifierQuery = (identifier) => {
  */
 const buildIdentifierOrQuery = (identifier) => {
   const normalized = normalizeIdentifier(identifier);
+  const trimmed = identifier.trim();
+  const digitsOnly = trimmed.replace(/\D/g, '');
+  const phoneVariants = [trimmed];
+  if (digitsOnly !== trimmed) phoneVariants.push(digitsOnly);
+  if (!trimmed.startsWith('+')) phoneVariants.push(`+${digitsOnly}`);
+
   return {
     $or: [
       { email: normalized },
-      { phoneNumber: identifier.trim() }
+      ...phoneVariants.map(p => ({ phoneNumber: p }))
     ]
   };
 };
@@ -163,7 +169,6 @@ const deactivateUser = async (userId) => {
  * @returns {boolean}
  */
 const verifyPassword = async (plainPassword, hashedPassword) => {
-  console.log("plainPassword", plainPassword, "hashedPassword", hashedPassword)
   if (!plainPassword || !hashedPassword) return false;
   if (!isValidBcryptHash(hashedPassword)) return false;
 
