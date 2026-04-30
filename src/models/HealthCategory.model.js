@@ -53,6 +53,16 @@ const healthCategorySchema = new mongoose.Schema(
         type: String,
         trim: true
       },
+      caption: {
+        type: String,
+        trim: true,
+        default: null
+      },
+      badge: {
+        type: String,
+        trim: true,
+        default: null
+      },
       order: {
         type: Number,
         default: 0
@@ -113,4 +123,3 @@ healthCategorySchema.index({ order: 1 });
 healthCategorySchema.index({ 'types.slug': 1 });
 
 module.exports = mongoose.model('HealthCategory', healthCategorySchema);
-

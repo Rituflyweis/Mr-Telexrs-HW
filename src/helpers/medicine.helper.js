@@ -531,6 +531,7 @@ const buildMedicineData = (data, images, healthCategoryData = {}) => {
     isTrendy: parseBoolean(data.isTrendy, false),
     isBestOffer: parseBoolean(data.isBestOffer, false),
     discountPercentage: data.discountPercentage !== undefined ? parseFloat(data.discountPercentage) : undefined,
+    rating: data.rating !== undefined ? parseFloat(data.rating) : undefined,
     markup: data.markup !== undefined ? parseFloat(data.markup) : 0,
     stock: data.stock ? parseInt(data.stock) : 0,
     status: data.status || undefined,

@@ -257,12 +257,22 @@ exports.createHealthCategoryValidation = [
     .optional()
     .trim()
     .isLength({ min: 2, max: 100 })
-    .withMessage('Category badge must be between 2 and 100 characters'),
+    .withMessage('Category caption must be between 2 and 100 characters'),
   body('badge')
     .optional()
     .trim()
     .isLength({ min: 2, max: 100 })
-    .withMessage('Category badge must be between 2 and 100 characters')
+    .withMessage('Category badge must be between 2 and 100 characters'),
+  body('types.*.caption')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Type caption must be between 2 and 100 characters'),
+  body('types.*.badge')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Type badge must be between 2 and 100 characters')
 ];
 
 // Bulk create health categories validation
@@ -326,6 +336,16 @@ exports.bulkCreateHealthCategoriesValidation = [
     .trim()
     .isString()
     .withMessage('Type icon must be a string'),
+  body('categories.*.types.*.caption')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Type caption must be between 2 and 100 characters'),
+  body('categories.*.types.*.badge')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Type badge must be between 2 and 100 characters'),
   body('categories.*.types.*.order')
     .optional()
     .isInt({ min: 0 })
@@ -338,6 +358,16 @@ exports.bulkCreateHealthCategoriesValidation = [
     .optional()
     .isInt({ min: 0 })
     .withMessage('Order must be a non-negative integer'),
+  body('categories.*.caption')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Category caption must be between 2 and 100 characters'),
+  body('categories.*.badge')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Category badge must be between 2 and 100 characters'),
   body('categories.*.isActive')
     .optional()
     .isBoolean()
@@ -372,6 +402,16 @@ exports.updateHealthCategoryValidation = [
     .trim()
     .isString()
     .withMessage('Icon must be a string'),
+  body('caption')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Category caption must be between 2 and 100 characters'),
+  body('badge')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Category badge must be between 2 and 100 characters'),
   body('types')
     .optional()
     .isArray()
@@ -396,6 +436,16 @@ exports.updateHealthCategoryValidation = [
     .trim()
     .isString()
     .withMessage('Type icon must be a string'),
+  body('types.*.caption')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Type caption must be between 2 and 100 characters'),
+  body('types.*.badge')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Type badge must be between 2 and 100 characters'),
   body('types.*.order')
     .optional()
     .isInt({ min: 0 })

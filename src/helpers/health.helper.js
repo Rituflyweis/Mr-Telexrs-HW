@@ -230,7 +230,17 @@ const filterActiveTypes = (category) => {
 
   return {
     ...category,
-    types: category.types ? category.types.filter(type => type.isActive !== false) : []
+    caption: category.caption ?? null,
+    badge: category.badge ?? null,
+    types: category.types
+      ? category.types
+          .filter(type => type.isActive !== false)
+          .map(type => ({
+            ...type,
+            caption: type.caption ?? null,
+            badge: type.badge ?? null
+          }))
+      : []
   };
 };
 
@@ -308,7 +318,9 @@ const extractCategorySummary = (category) => {
     name: category.name,
     slug: category.slug,
     description: category.description,
-    icon: category.icon
+    icon: category.icon,
+    caption: category.caption ?? null,
+    badge: category.badge ?? null
   };
 };
 
@@ -431,4 +443,3 @@ module.exports = {
   parsePagination,
   buildPaginationResponse
 };
-

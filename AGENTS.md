@@ -1,13 +1,13 @@
 <claude-mem-context>
 # Memory Context
 
-# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-04-30 5:17pm GMT+5:30
+# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-04-30 6:17pm GMT+5:30
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (20,282t read) | 1,054,705t work | 98% savings
+Stats: 50 obs (20,363t read) | 632,799t work | 97% savings
 
 ### Apr 29, 2026
 S13 Improve error handling for HealthWarehouse customer creation to surface better diagnostic info (Apr 29 at 1:41 PM)
@@ -20,24 +20,7 @@ S15 Diagnosed HealthWarehouse "invalid state" error from production logs — roo
 S16 Manually fix test patient address in production DB — delete duplicates and update to valid US address for HealthWarehouse compatibility (Apr 29 at 2:55 PM)
 S17 Retire duplicate us-state module and consolidate US state management onto existing /patient/states endpoint with StateAvailability as single source of truth (Apr 29 at 3:00 PM)
 S18 Consolidate US state management onto single /patient/states endpoint — retire us-state module, make StateAvailability DB the single source of truth, add DC, default all available (Apr 29 at 3:27 PM)
-73 5:11p 🔵 Doctor Panel — Order-Based Condition/Symptoms Visibility Scope
-75 5:15p 🔵 Cart Item Drops `isConsented` Field — Not Persisted in Cart Model
-74 5:21p 🟣 Order-Based Condition/Symptoms Now Surfaces in All Three Doctor Consultation Endpoints
-76 5:25p 🔵 `isConsented` Missing from Cart Model Schema — Silently Dropped on Add-to-Cart
-77 " 🔴 `isConsented` Added to Cart Item Schema
-78 5:26p 🔴 `isConsented` Propagation — Cart Validation and Schema Patched
-79 " 🔴 `isConsented` Wired Through cart.service.js — Plus Existing-Item Update Logic Improved
-80 " 🔴 `isConsented` Now Persisted Through Full Order Pipeline — Schema and Snapshot Logic Updated
-81 " 🔴 `isConsented` Wired Through `reorder` and `createRefillOrder` Paths
-82 5:27p 🔴 `isConsented` Pipeline Complete — All Four Order Creation Paths Wired
-83 " 🔴 `isConsented` Validation Added to Order Validation — Full Pipeline Now Complete
-84 " 🔴 `isConsented` Added to Doctor Consultation MongoDB Projection
-85 " 🔵 `isConsented` Implementation Verified — All 7 Files Pass Syntax and Whitespace Checks
-86 " 🟣 Complete `isConsented` + Condition/Symptoms Feature — 8-File Change Set Finalized
-87 " 🔵 Patient `medicalHistory` and `allergies` Return as Empty Arrays in Prescription Response
 88 7:11p 🔵 Medicine PUT API Rejects Frontend Payload — Populated Objects Sent Back
-89 " 🔴 Medicine Validation Now Accepts Populated Object Forms for subCategory and healthCategory
-90 " 🔵 Production Health Category Data — MEN'S HEALTH Slug and Types
 91 10:00p 🔵 Production medicines list endpoint returns 422 — fix not deployed
 92 11:12p 🔵 Production medicines list: limit capped at 100, pagination works, candidate found
 93 11:13p 🔵 Production add/remove subcategory test passed — healthTypeSlug is a full replace operation
@@ -71,6 +54,23 @@ S18 Consolidate US state management onto single /patient/states endpoint — ret
 144 " 🔵 Live API Confirms Patient Intake Form Already Submitted in Production DB
 145 " 🔴 submitConsultation Made Idempotent — No Longer Errors on Re-submission
 146 5:04p 🔴 Idempotent Submit Fix Applied Locally — Syntax Verified, Awaiting Vercel Deploy
+147 5:35p 🔵 Health Categories API — Missing badge/caption Fields and PUT Bug
+148 " 🔵 Mr-Telerxs Backend — Health Categories Module Structure Mapped
+149 " 🔵 PUT Category Bug Root Cause: badge/caption Missing from updateHealthCategoryValidation
+150 " 🔵 Validate Middleware Does NOT Strip Unknown Fields — PUT Bug Root Cause Revised
+151 " 🔵 Live Production API Confirms badge/caption Absent from All Category Documents
+152 5:36p 🔴 Added badge and caption Fields to HealthCategory types Subdocument Schema
+153 " 🟣 badge and caption Validators Added to All Health Category Validation Arrays
+154 5:37p 🔴 Schema Paths Verified — badge/caption Confirmed in Both Category and Types Subdocument
+155 " 🟣 health.helper.js Updated to Explicitly Surface badge/caption in GET Responses
+156 " 🔴 Full badge/caption Fix Verified and Ready — 3 Files Changed, Runtime Test Passed
+160 " ⚖️ Frontend API Contract Documented — PUT /categories/:id Request Body Shape
+157 5:54p 🔵 Medicine Rating Field — Data Type and Update Behavior Investigation
+158 " 🔵 Medicine Rating Bug Root Cause — Missing from Create Payload, No parseFloat on Update
+159 " 🔴 Medicine Rating Always Zero on Create — buildMedicineData Omits Rating Field
+161 5:55p 🔵 Medicine Module Architecture — All Routes Public, Full Create/Update Flow Confirmed
+162 6:17p ⚖️ Rating Field Fix Approach — Include in buildMedicineData Using Sent Value
+163 " 🔴 Medicine Rating Create Bug Fixed — Added rating to buildMedicineData
 
-Access 1055k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 633k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>
