@@ -79,6 +79,26 @@ const getPatient = async (userId) => {
   return patient;
 };
 
+const populateIntakeFormForResponse = async (intakeFormId) => {
+  return IntakeForm.findById(intakeFormId)
+    .populate({
+      path: 'doctor',
+      select: 'user specialty licenseNumber consultationFee status rating experience education certifications languages availability address',
+      populate: {
+        path: 'user',
+        select: 'firstName lastName email phoneNumber countryCode profilePicture'
+      }
+    })
+    .populate({
+      path: 'patient',
+      select: 'user dateOfBirth gender',
+      populate: {
+        path: 'user',
+        select: 'firstName lastName email phoneNumber'
+      }
+    });
+};
+
 // Get intake form
 exports.getIntakeForm = async (userId) => {
   const patient = await getPatient(userId);
@@ -255,6 +275,18 @@ exports.submitConsultation = async (userId, doctorId) => {
     throw new AppError('Intake form not found. Please complete the intake form first.', 404);
   }
 
+  // Keep submit endpoint idempotent for retries/save-button replays.
+  if (intakeForm.status === 'submitted') {
+    logger.info('Intake form submit retried for already submitted consultation', {
+      patientId: String(patient._id),
+      intakeFormId: String(intakeForm._id),
+      userId: String(userId),
+      doctorId: intakeForm?.doctor ? String(intakeForm.doctor) : null
+    });
+
+    return populateIntakeFormForResponse(intakeForm._id);
+  }
+
   // Validate and verify doctor ID if provided (optional)
   if (doctorId) {
     const doctor = await Doctor.findById(doctorId);
@@ -291,11 +323,6 @@ exports.submitConsultation = async (userId, doctorId) => {
     isMedicalQuestionsComplete: completeness.isMedicalQuestionsComplete
   };
 
-  // Check if already submitted
-  if (intakeForm.status === 'submitted') {
-    throw new AppError('Consultation has already been submitted.', 400);
-  }
-
   // Update status to submitted and assign doctor
   intakeForm.status = 'submitted';
   intakeForm.doctor = doctorId
@@ -303,26 +330,7 @@ exports.submitConsultation = async (userId, doctorId) => {
     : new mongoose.Types.ObjectId('69611415b8c266a7835c0c1a');
   await intakeForm.save();
 
-  // Populate doctor information before returning
-  const populatedForm = await IntakeForm.findById(intakeForm._id)
-    .populate({
-      path: 'doctor',
-      select: 'user specialty licenseNumber consultationFee status rating experience education certifications languages availability address',
-      populate: {
-        path: 'user',
-        select: 'firstName lastName email phoneNumber countryCode profilePicture'
-      }
-    })
-    .populate({
-      path: 'patient',
-      select: 'user dateOfBirth gender',
-      populate: {
-        path: 'user',
-        select: 'firstName lastName email phoneNumber'
-      }
-    });
-
-  return populatedForm;
+  return populateIntakeFormForResponse(intakeForm._id);
 };
 
 // Create/Update intake form (legacy - for backward compatibility)

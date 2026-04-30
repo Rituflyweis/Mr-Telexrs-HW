@@ -1,13 +1,13 @@
 <claude-mem-context>
 # Memory Context
 
-# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-04-30 3:09pm GMT+5:30
+# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-04-30 5:17pm GMT+5:30
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (19,767t read) | 1,222,629t work | 98% savings
+Stats: 50 obs (20,282t read) | 1,054,705t work | 98% savings
 
 ### Apr 29, 2026
 S13 Improve error handling for HealthWarehouse customer creation to surface better diagnostic info (Apr 29 at 1:41 PM)
@@ -16,30 +16,10 @@ S10 Add master OTP "000000" to bypass Twilio trial account SMS limitations acros
 S11 Revert phone number validation regression from last commit that broke login screen phone submission (Apr 29 at 2:33 PM)
 S12 Fix login-otp returning 500 due to both Twilio SMS and Gmail SMTP failing in production (Apr 29 at 2:37 PM)
 S14 Improve error handling for HealthWarehouse customer creation — add detailed logging to diagnose state field issue (Apr 29 at 2:41 PM)
-36 2:48p 🔵 Address Model Field Names Match — State Is Required But Value May Be Invalid Format
-37 " ✅ Enhanced createCustomer Logging and Added Pre-flight State Validation
 S15 Diagnosed HealthWarehouse "invalid state" error from production logs — root cause confirmed as Indian address with state "Delhi" sent to US-only pharmacy API (Apr 29 at 2:48 PM)
-38 2:55p 🔵 Root Cause Confirmed — Patient Address Uses Indian Location with Non-US State "Delhi"
 S16 Manually fix test patient address in production DB — delete duplicates and update to valid US address for HealthWarehouse compatibility (Apr 29 at 2:55 PM)
-39 2:59p 🔵 Test Patient Has 5 Duplicate Indian Addresses — All Invalid for HealthWarehouse
-40 " 🔵 Address Routes Located in Dedicated Module — Not Patient Module
-42 " ✅ Deleted 4 Duplicate Indian Addresses for Test Patient
-41 " 🔵 Address API Routes — DELETE and PUT Endpoints Confirmed Available
-43 " ✅ Test Patient Address Updated to Valid US Address — New York NY 10001
 S17 Retire duplicate us-state module and consolidate US state management onto existing /patient/states endpoint with StateAvailability as single source of truth (Apr 29 at 3:00 PM)
-44 3:25p 🔵 Two Competing US State Systems Found — us-state Module vs availability Module
-45 " 🔵 Full Architecture of Dual State Systems — StateAvailability vs UsState Models Compared
-46 " ✅ StateAvailability Model Default Availability Changed from false to true
-47 3:26p 🔄 availability.service.js Refactored — DB Is Now Single Source of Truth for US States
-48 " ✅ us-state Module Retired — Consolidated onto Existing availability Module
-49 3:27p 🔵 constants/states.js Contains Exactly 50 US States — DC Not Included
-50 " ✅ District of Columbia (DC) Added to US States Constants
 S18 Consolidate US state management onto single /patient/states endpoint — retire us-state module, make StateAvailability DB the single source of truth, add DC, default all available (Apr 29 at 3:27 PM)
-68 5:10p 🔵 Doctor Panel Consultations: Condition & Symptoms Data Source Traced
-69 " 🔵 Order Model Lacks Condition/Symptoms Fields — Only Cart Items Have Them
-70 " 🔵 Cart-to-Order Conversion Drops Condition/Symptoms Fields
-71 " 🔵 createOrder Cart-to-Order Item Mapping Confirmed: condition/symptoms Explicitly Absent
-72 " 🔵 Doctor Dashboard getRecentConsultations Uses Symptoms as Primary Condition Source
 73 5:11p 🔵 Doctor Panel — Order-Based Condition/Symptoms Visibility Scope
 75 5:15p 🔵 Cart Item Drops `isConsented` Field — Not Persisted in Cart Model
 74 5:21p 🟣 Order-Based Condition/Symptoms Now Surfaces in All Three Doctor Consultation Endpoints
@@ -71,6 +51,26 @@ S18 Consolidate US state management onto single /patient/states endpoint — ret
 100 1:24a 🔵 Intake Form Submit API Returns 400 — Incomplete Sections Validation
 101 1:25a 🔵 IntakeForm Submit Validation Logic — Three Boolean Flags Must All Be True
 102 " 🔵 IntakeForm DB Snapshot — Patient 69eb6128 Has Incomplete Flags (draft, all false)
+127 3:09p 🔴 PUT API fails to update medicine with multiple health type slugs
+128 " 🔵 Mr-Telerxs Backend: active modifications across auth, order, checkout, and doctor modules
+129 3:10p 🔵 Medicine PUT API: validateHealthCategory called once per request, may not handle multiple slugs
+130 " 🔵 Medicine Tadalafil (ID: 69f1ce63bd3e913a947bebcd) confirmed working with multiple healthTypeSlug in DB
+131 " 🔵 PUT medicine API works correctly when healthTypeSlug sent as JSON array — bug is in FE payload construction
+132 3:11p 🔵 Minimal PUT payload with only healthCategory + healthTypeSlug array also succeeds
+133 " 🔵 normalizeHealthTypeValues handles object arrays — backend accepts subCategory objects as input, not just slug strings
+134 " 🔴 medicine.validation.js updated to support .value property in health type object normalization
+135 " 🔴 medicine.helper.js updated to support .value property in health type and category normalization
+136 3:12p 🔴 Committed fix for healthTypeSlug .value normalization — 2 files, 14 insertions
+137 " 🔴 Full diff confirmed: 5 precise changes across 2 files for .value normalization fix
+138 3:26p 🔵 FE PUT payload analysis: format correct but subCategory/healthTypeSlug count mismatch detected
+139 3:27p 🔵 Sildenafil medicine PUT with 3 slugs only saved 2 — production Vercel not yet running committed fix
+140 " 🔵 Production server confirmed dropping third slug — updatedAt unchanged proves Mongoose sees no diff
+141 5:02p 🔵 Intake Form Submit API Returns 400 "Already Submitted" Error
+142 " 🔵 Mr-TeleRxs Backend Project Structure Identified
+143 5:03p 🔵 Root Cause Traced: submitConsultation Blocks Re-submission With Hard Guard
+144 " 🔵 Live API Confirms Patient Intake Form Already Submitted in Production DB
+145 " 🔴 submitConsultation Made Idempotent — No Longer Errors on Re-submission
+146 5:04p 🔴 Idempotent Submit Fix Applied Locally — Syntax Verified, Awaiting Vercel Deploy
 
-Access 1223k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 1055k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>
