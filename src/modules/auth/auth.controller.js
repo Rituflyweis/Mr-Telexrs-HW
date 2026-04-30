@@ -338,17 +338,18 @@ exports.forgotPassword = async (req, res, next) => {
     }
 
     // ✅ Wait for OTP generation + sending
-    const otpCode = await authService.forgotPassword(
+    const forgotPasswordResult = await authService.forgotPassword(
       identifier,
       countryCode || '+91'
     );
 
     return res.status(200).json({
       success: true,
-      message: 'OTP sent successfully',
+      message: forgotPasswordResult.message || 'OTP sent successfully',
       data: {
         identifier,
-        ...(process.env.NODE_ENV !== 'production' && { otp: otpCode })
+        ...(process.env.NODE_ENV !== 'production' && { otp: forgotPasswordResult.otp }),
+        ...(forgotPasswordResult.delivery && { delivery: forgotPasswordResult.delivery })
       }
     });
 

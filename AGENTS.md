@@ -1,13 +1,13 @@
 <claude-mem-context>
 # Memory Context
 
-# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-04-30 1:24am GMT+5:30
+# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-04-30 3:09pm GMT+5:30
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (19,291t read) | 1,207,785t work | 98% savings
+Stats: 50 obs (19,767t read) | 1,222,629t work | 98% savings
 
 ### Apr 29, 2026
 S13 Improve error handling for HealthWarehouse customer creation to surface better diagnostic info (Apr 29 at 1:41 PM)
@@ -15,10 +15,7 @@ S9 HealthWarehouse customer creation error — diagnosed "missing or invalid sta
 S10 Add master OTP "000000" to bypass Twilio trial account SMS limitations across all auth flows (Apr 29 at 2:11 PM)
 S11 Revert phone number validation regression from last commit that broke login screen phone submission (Apr 29 at 2:33 PM)
 S12 Fix login-otp returning 500 due to both Twilio SMS and Gmail SMTP failing in production (Apr 29 at 2:37 PM)
-33 2:41p 🔵 Production OTP Delivery Fully Broken — Both Twilio SMS and Gmail SMTP Failing
-34 " 🔴 sendLoginOtp No Longer Throws 500 When All Delivery Channels Fail
 S14 Improve error handling for HealthWarehouse customer creation — add detailed logging to diagnose state field issue (Apr 29 at 2:41 PM)
-35 2:47p 🔵 HealthWarehouse createCustomer Receives Raw Address Model — State Field Path Mismatch Confirmed
 36 2:48p 🔵 Address Model Field Names Match — State Is Required But Value May Be Invalid Format
 37 " ✅ Enhanced createCustomer Logging and Added Pre-flight State Validation
 S15 Diagnosed HealthWarehouse "invalid state" error from production logs — root cause confirmed as Indian address with state "Delhi" sent to US-only pharmacy API (Apr 29 at 2:48 PM)
@@ -71,6 +68,9 @@ S18 Consolidate US state management onto single /patient/states endpoint — ret
 97 12:29a 🔴 Runbook Step 8.1 Corrupted JWT Token Fixed
 98 12:30a ✅ Runbook PUT Payloads Expanded to Full GET Response Mirror
 99 12:31a ✅ Runbook Finalized: Full 483-Line File Verified
+100 1:24a 🔵 Intake Form Submit API Returns 400 — Incomplete Sections Validation
+101 1:25a 🔵 IntakeForm Submit Validation Logic — Three Boolean Flags Must All Be True
+102 " 🔵 IntakeForm DB Snapshot — Patient 69eb6128 Has Incomplete Flags (draft, all false)
 
-Access 1208k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 1223k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>

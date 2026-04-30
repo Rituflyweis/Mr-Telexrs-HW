@@ -164,7 +164,7 @@ exports.getRecentConsultations1s = async (userId, query = {}) => {
       //   path:"intakeFormId"
       // }
     ])
-    .sort({ createdAt: -1 })
+    .sort({ updatedAt: -1 })
     .limit(limit)
     .skip(skip)
     .lean();
@@ -211,7 +211,7 @@ exports.getRecentConsultations1s = async (userId, query = {}) => {
         : 'Unknown Patient';
 
     const condition = intakeForm.medicalQuestions?.pastMedicalHistory?.join(', ') || 'Consultation Request';
-    const consultationDate = new Date(intakeForm.createdAt);
+    const consultationDate = new Date(intakeForm.updatedAt || intakeForm.createdAt);
     const patientRefills = patientId ? (refillsByPatient[patientId] || []) : [];
 
     return {
@@ -264,7 +264,7 @@ exports.getRecentConsultations = async (userId, query = {}) => {
         }
       }
     ])
-    .sort({ createdAt: -1 })
+    .sort({ updatedAt: -1 })
     .lean();
 
   // ✅ SEARCH FILTER
@@ -351,7 +351,7 @@ exports.getRecentConsultations = async (userId, query = {}) => {
       intakeForm.medicalQuestions?.pastMedicalHistory?.join(', ') ||
       'Consultation Request';
 
-    const consultationDate = new Date(intakeForm.createdAt);
+    const consultationDate = new Date(intakeForm.updatedAt || intakeForm.createdAt);
 
     const patientRefills = patientId
       ? refillsByPatient[patientId] || []

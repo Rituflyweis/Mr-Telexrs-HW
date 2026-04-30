@@ -33,7 +33,7 @@ exports.getCheckoutSummary = async (userId) => {
   const activeItems = cart.items.filter(item => !item.isSaved);
   const hasShippableItems = activeItems.some(item => item.productType !== 'doctors_note');
 
-  const consultantFees = 34.99;
+  const consultantFees = hasShippableItems ? 34.99 : 0;
   // Calculate tax if not set
   const tax = 0;
   //  cart.tax || (cart.subtotal * 0.03);
@@ -86,18 +86,27 @@ exports.validateCheckout = async (userId, data) => {
     throw new AppError('Cart is empty', 400);
   }
 
-  // Verify shipping address
-  const shippingAddress = await Address.findOne({
-    _id: data.shippingAddressId,
-    patient: patient._id
-  });
-  if (!shippingAddress) throw new AppError('Shipping address not found', 404);
+  const activeItems = cart.items.filter(item => !item.isSaved);
+  const hasShippableItems = activeItems.some(item => item.productType !== 'doctors_note');
+
+  let shippingAddress = null;
+  if (hasShippableItems) {
+    if (!data.shippingAddressId) {
+      throw new AppError('Shipping address ID is required for shippable items', 400);
+    }
+
+    shippingAddress = await Address.findOne({
+      _id: data.shippingAddressId,
+      patient: patient._id
+    });
+    if (!shippingAddress) throw new AppError('Shipping address not found', 404);
+  }
 
   // Validate billing address
-  const billingAddressSameAsShipping = data.billingAddressSameAsShipping !== false;
+  const billingAddressSameAsShipping = hasShippableItems && data.billingAddressSameAsShipping !== false;
   let billingAddress = null;
 
-  if (billingAddressSameAsShipping) {
+  if (billingAddressSameAsShipping && shippingAddress) {
     // Use shipping address as billing address
     billingAddress = {
       firstName: shippingAddress.fullName?.split(' ')[0] || '',
@@ -110,28 +119,32 @@ exports.validateCheckout = async (userId, data) => {
       zipCode: shippingAddress.postalCode || ''
     };
   } else {
-    // Validate billing address fields
-    if (!data.billingAddress) {
-      throw new AppError('Billing address is required when different from shipping', 400);
+    if (!hasShippableItems && !data.billingAddress) {
+      billingAddress = null;
+    } else {
+      // Validate billing address fields
+      if (!data.billingAddress) {
+        throw new AppError('Billing address is required when different from shipping', 400);
+      }
+
+      const requiredFields = ['firstName', 'lastName', 'streetAddress', 'city', 'state', 'zipCode', 'phoneNumber'];
+      const missingFields = requiredFields.filter(field => !data.billingAddress[field]);
+
+      if (missingFields.length > 0) {
+        throw new AppError(`Missing billing address fields: ${missingFields.join(', ')}`, 400);
+      }
+
+      billingAddress = {
+        firstName: data.billingAddress.firstName,
+        lastName: data.billingAddress.lastName,
+        email: data.billingAddress.email || '',
+        phoneNumber: data.billingAddress.phoneNumber,
+        streetAddress: data.billingAddress.streetAddress,
+        city: data.billingAddress.city,
+        state: data.billingAddress.state,
+        zipCode: data.billingAddress.zipCode
+      };
     }
-
-    const requiredFields = ['firstName', 'lastName', 'streetAddress', 'city', 'state', 'zipCode', 'phoneNumber'];
-    const missingFields = requiredFields.filter(field => !data.billingAddress[field]);
-
-    if (missingFields.length > 0) {
-      throw new AppError(`Missing billing address fields: ${missingFields.join(', ')}`, 400);
-    }
-
-    billingAddress = {
-      firstName: data.billingAddress.firstName,
-      lastName: data.billingAddress.lastName,
-      email: data.billingAddress.email || '',
-      phoneNumber: data.billingAddress.phoneNumber,
-      streetAddress: data.billingAddress.streetAddress,
-      city: data.billingAddress.city,
-      state: data.billingAddress.state,
-      zipCode: data.billingAddress.zipCode
-    };
   }
 
   // Validate payment method

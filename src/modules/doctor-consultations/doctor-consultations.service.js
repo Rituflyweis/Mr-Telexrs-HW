@@ -36,6 +36,10 @@ const ORDER_CONSULTATION_PROJECTION = {
   'items.isConsented': 1
 };
 
+const NON_EXCUSE_ORDER_FILTER = {
+  items: { $elemMatch: { productType: { $ne: 'doctors_note' } } }
+};
+
 const toCleanStringArray = (value) => {
   if (Array.isArray(value)) {
     return value
@@ -126,6 +130,7 @@ exports.getAllConsultations = async (query = {}) => {
     }).distinct('patient');
 
     const orderPatients = await Order.find({
+      ...NON_EXCUSE_ORDER_FILTER,
       $or: [
         { condition: searchRegex },
         { symptoms: searchRegex },
@@ -159,7 +164,7 @@ exports.getAllConsultations = async (query = {}) => {
   const formattedConsultations = await Promise.all(consultations.map(async form => {
     const order = form.patient?._id
       ? await Order.findOne(
-        { patient: form.patient._id },
+        { patient: form.patient._id, ...NON_EXCUSE_ORDER_FILTER },
         ORDER_CONSULTATION_PROJECTION
       ).sort({ createdAt: -1 }).lean()
       : null;
@@ -221,6 +226,7 @@ exports.getConsultationsByDoctorId = async (doctorId, query = {}) => {
     }).distinct('patient');
 
     const orderPatients = await Order.find({
+      ...NON_EXCUSE_ORDER_FILTER,
       $or: [
         { condition: searchRegex },
         { symptoms: searchRegex },
@@ -248,7 +254,7 @@ exports.getConsultationsByDoctorId = async (doctorId, query = {}) => {
   const formattedConsultations = await Promise.all(consultations.map(async form => {
     const order = form.patient?._id
       ? await Order.findOne(
-        { patient: form.patient._id },
+        { patient: form.patient._id, ...NON_EXCUSE_ORDER_FILTER },
         ORDER_CONSULTATION_PROJECTION
       ).sort({ createdAt: -1 }).lean()
       : null;
@@ -331,7 +337,7 @@ exports.getConsultationById = async (userId, consultationId, doctorIdFromQuery =
   const submittedDate = new Date(intakeForm.createdAt);
   const order = intakeForm.patient?._id
     ? await Order.findOne(
-      { patient: intakeForm.patient._id },
+      { patient: intakeForm.patient._id, ...NON_EXCUSE_ORDER_FILTER },
       ORDER_CONSULTATION_PROJECTION
     ).sort({ createdAt: -1 }).lean()
     : null;

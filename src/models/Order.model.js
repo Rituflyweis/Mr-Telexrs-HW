@@ -151,7 +151,10 @@ const orderSchema = new mongoose.Schema(
     shippingAddress: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Address',
-      required: true
+      required: function () {
+        const items = Array.isArray(this.items) ? this.items : [];
+        return items.some(item => item?.productType !== 'doctors_note');
+      }
     },
 
     billingAddress: {

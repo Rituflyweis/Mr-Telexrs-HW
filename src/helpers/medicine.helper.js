@@ -88,7 +88,7 @@ const normalizeHealthTypeValues = (value) => {
     }
 
     if (typeof item === 'object' && !Array.isArray(item)) {
-      const normalizedFromObject = item.slug || item._id || item.id;
+      const normalizedFromObject = item.slug || item._id || item.id || item.value;
       if (normalizedFromObject !== undefined && normalizedFromObject !== null) {
         const normalizedString = String(normalizedFromObject).trim();
         if (normalizedString) values.push(normalizedString);
@@ -234,7 +234,7 @@ const validateHealthCategory = async (categoryId, typeSlugOrId) => {
   if (typeof normalizedCategoryId === 'string') {
     normalizedCategoryId = normalizedCategoryId.trim();
   } else if (normalizedCategoryId && typeof normalizedCategoryId === 'object' && !Array.isArray(normalizedCategoryId)) {
-    normalizedCategoryId = normalizedCategoryId._id || normalizedCategoryId.id || normalizedCategoryId.slug;
+    normalizedCategoryId = normalizedCategoryId._id || normalizedCategoryId.id || normalizedCategoryId.slug || normalizedCategoryId.value;
     if (typeof normalizedCategoryId === 'string') {
       normalizedCategoryId = normalizedCategoryId.trim();
     }

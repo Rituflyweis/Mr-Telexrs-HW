@@ -1,10 +1,25 @@
 const { body, param } = require('express-validator');
 
+const hasShippableItems = (items = []) => (
+  Array.isArray(items) && items.some(item => item?.productType !== 'doctors_note')
+);
+
+const hasNonEmptyValue = (value) => {
+  if (value === undefined || value === null) return false;
+  if (typeof value === 'string') return value.trim() !== '';
+  return true;
+};
+
+const shouldValidateBillingAddress = (payload = {}) => (
+  payload.billingAddressSameAsShipping === false &&
+  (hasNonEmptyValue(payload.shippingAddressId) || hasNonEmptyValue(payload.shippingAddress))
+);
+
 // Create order validation
 exports.createOrderValidation = [
   // Shipping address can be provided as ID or object
   body('shippingAddressId')
-    .optional()
+    .optional({ checkFalsy: true })
     .isMongoId()
     .withMessage('Invalid shipping address ID'),
   
@@ -130,9 +145,23 @@ exports.createOrderValidation = [
     .isIn(['home', 'work', 'other'])
     .withMessage('Address type must be home, work, or other'),
   
-  // Custom validation: Either shippingAddressId or shippingAddress object must be provided
-  body().custom((value) => {
-    if (!value.shippingAddressId && !value.shippingAddress) {
+  // Custom validation: shipping address is required only for shippable items
+  body().custom((value = {}) => {
+    const hasShippingAddressId = typeof value.shippingAddressId === 'string'
+      ? value.shippingAddressId.trim() !== ''
+      : Boolean(value.shippingAddressId);
+    const hasShippingAddressObject = Boolean(
+      value.shippingAddress &&
+      typeof value.shippingAddress === 'object' &&
+      Object.keys(value.shippingAddress).length > 0
+    );
+
+    // For createFromCart orders we validate shipping need in service after cart lookup.
+    const requiresShippingAddress = value.createFromCart === true
+      ? false
+      : hasShippableItems(value.items || []);
+
+    if (requiresShippingAddress && !hasShippingAddressId && !hasShippingAddressObject) {
       throw new Error('Either shippingAddressId or shippingAddress object is required');
     }
     return true;
@@ -244,89 +273,89 @@ exports.createOrderValidation = [
     .withMessage('Billing address same as shipping must be a boolean'),
   
   body('billingAddress.firstName')
-    .if(body('billingAddressSameAsShipping').equals(false))
+    .if((value, { req }) => shouldValidateBillingAddress(req.body))
     .notEmpty()
     .withMessage('First name is required when billing address is different')
     .isString()
     .withMessage('First name must be a string'),
   
   body('billingAddress.lastName')
-    .if(body('billingAddressSameAsShipping').equals(false))
+    .if((value, { req }) => shouldValidateBillingAddress(req.body))
     .notEmpty()
     .withMessage('Last name is required when billing address is different')
     .isString()
     .withMessage('Last name must be a string'),
   
   body('billingAddress.email')
-    .if(body('billingAddressSameAsShipping').equals(false))
+    .if((value, { req }) => shouldValidateBillingAddress(req.body))
     .optional()
     .isEmail()
     .withMessage('Invalid email format'),
   
   body('billingAddress.phoneNumber')
-    .if(body('billingAddressSameAsShipping').equals(false))
+    .if((value, { req }) => shouldValidateBillingAddress(req.body))
     .optional()
     .isString()
     .withMessage('Phone number must be a string'),
   
   body('billingAddress.phone')
-    .if(body('billingAddressSameAsShipping').equals(false))
+    .if((value, { req }) => shouldValidateBillingAddress(req.body))
     .optional()
     .isString()
     .withMessage('Phone must be a string'),
   
   body('billingAddress.streetAddress')
-    .if(body('billingAddressSameAsShipping').equals(false))
+    .if((value, { req }) => shouldValidateBillingAddress(req.body))
     .optional()
     .isString()
     .withMessage('Street address must be a string'),
   
   body('billingAddress.addressLine1')
-    .if(body('billingAddressSameAsShipping').equals(false))
+    .if((value, { req }) => shouldValidateBillingAddress(req.body))
     .optional()
     .isString()
     .withMessage('Address line 1 must be a string'),
   
   body('billingAddress.streetAddress2')
-    .if(body('billingAddressSameAsShipping').equals(false))
+    .if((value, { req }) => shouldValidateBillingAddress(req.body))
     .optional()
     .isString()
     .withMessage('Street address 2 must be a string'),
   
   body('billingAddress.addressLine2')
-    .if(body('billingAddressSameAsShipping').equals(false))
+    .if((value, { req }) => shouldValidateBillingAddress(req.body))
     .optional()
     .isString()
     .withMessage('Address line 2 must be a string'),
   
   body('billingAddress.city')
-    .if(body('billingAddressSameAsShipping').equals(false))
+    .if((value, { req }) => shouldValidateBillingAddress(req.body))
     .notEmpty()
     .withMessage('City is required when billing address is different')
     .isString()
     .withMessage('City must be a string'),
   
   body('billingAddress.state')
-    .if(body('billingAddressSameAsShipping').equals(false))
+    .if((value, { req }) => shouldValidateBillingAddress(req.body))
     .optional()
     .isString()
     .withMessage('State must be a string'),
   
   body('billingAddress.stateProvince')
-    .if(body('billingAddressSameAsShipping').equals(false))
+    .if((value, { req }) => shouldValidateBillingAddress(req.body))
     .optional()
     .isString()
     .withMessage('State/Province must be a string'),
   
   body('billingAddress.zipCode')
-    .if(body('billingAddressSameAsShipping').equals(false))
+    .if((value, { req }) => shouldValidateBillingAddress(req.body))
     .notEmpty()
     .withMessage('Zip/Postal code is required when billing address is different')
     .isString()
     .withMessage('Zip code must be a string'),
   
   body('billingAddress.postalCode')
-    .if(body('billingAddressSameAsShipping').equals(false))
+    .if((value, { req }) => shouldValidateBillingAddress(req.body))
     .optional()
     .isString()
     .withMessage('Postal code must be a string'),

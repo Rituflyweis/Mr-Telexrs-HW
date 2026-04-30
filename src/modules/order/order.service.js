@@ -20,6 +20,7 @@ const {
 const HWHelper = require('../../helpers/healthwarehouse.helper');
 const IntakeFormModel = require('../../models/IntakeForm.model');
 const DEFAULT_SHIPPING_CHARGES = 11;
+const DEFAULT_CONSULTANT_FEES = 34.99;
 
 const hasShippableItems = (items = []) => {
   return items.some((item) => item.productType !== 'doctors_note');
@@ -27,6 +28,10 @@ const hasShippableItems = (items = []) => {
 
 const getShippingChargesForItems = (items = []) => {
   return hasShippableItems(items) ? DEFAULT_SHIPPING_CHARGES : 0;
+};
+
+const getConsultantFeesForItems = (items = []) => {
+  return hasShippableItems(items) ? DEFAULT_CONSULTANT_FEES : 0;
 };
 
 const toCleanStringArray = (value) => {
@@ -205,7 +210,8 @@ exports.deleteOrderItem = async (userId, orderId, itemId) => {
   // Recalculate and save
   order.subtotal = order.items.reduce((sum, item) => sum + item.totalPrice, 0);
   order.tax = 0;
-  order.consultantFees = 34.99;
+  order.shippingCharges = getShippingChargesForItems(order.items.filter(item => !item.isSaved));
+  order.consultantFees = getConsultantFeesForItems(order.items.filter(item => !item.isSaved));
   // order.subtotal * 0.18;
   order.totalAmount = order.subtotal + order.shippingCharges + order.tax - order.discount + order.consultantFees;
   await order.save();
@@ -237,7 +243,8 @@ exports.saveOrderItem = async (userId, orderId, itemId) => {
 
   order.subtotal = order.items.filter(i => !i.isSaved).reduce((sum, i) => sum + i.totalPrice, 0);
   order.tax = 0;
-  order.consultantFees = 34.99;
+  order.shippingCharges = getShippingChargesForItems(order.items.filter(item => !item.isSaved));
+  order.consultantFees = getConsultantFeesForItems(order.items.filter(item => !item.isSaved));
   order.totalAmount = order.subtotal + order.shippingCharges + order.tax + order.consultantFees - order.discount;
   await order.save();
 
@@ -267,7 +274,8 @@ exports.unsaveOrderItem = async (userId, orderId, itemId) => {
 
   order.subtotal = order.items.filter(i => !i.isSaved).reduce((sum, i) => sum + i.totalPrice, 0);
   order.tax = 0;
-  order.consultantFees = 34.99;
+  order.shippingCharges = getShippingChargesForItems(order.items.filter(item => !item.isSaved));
+  order.consultantFees = getConsultantFeesForItems(order.items.filter(item => !item.isSaved));
   //order.subtotal * 0.18;
   order.totalAmount = order.subtotal + order.shippingCharges + order.tax + order.consultantFees - order.discount;
   await order.save();
@@ -298,7 +306,8 @@ exports.updateOrderItemQuantity = async (userId, orderId, itemId, quantity) => {
 
   order.subtotal = order.items.reduce((sum, i) => sum + i.totalPrice, 0);
   order.tax = 0;
-  order.consultantFees = 34.99;
+  order.shippingCharges = getShippingChargesForItems(order.items.filter(item => !item.isSaved));
+  order.consultantFees = getConsultantFeesForItems(order.items.filter(item => !item.isSaved));
   order.subtotal * 0.18;
   order.totalAmount = order.subtotal + order.shippingCharges + order.tax + order.consultantFees - order.discount;
   await order.save();
@@ -484,17 +493,18 @@ exports.reorder = async (userId, orderId) => {
 
   const subtotal = newItems.reduce((sum, item) => sum + item.totalPrice, 0);
   const tax = 0;
-  const consultantFees = 34.99;
+  const consultantFees = getConsultantFeesForItems(newItems);
   // subtotal * 0.18;
   const shippingCharges = getShippingChargesForItems(newItems);
   const totalAmount = subtotal + shippingCharges + tax + consultantFees;
   const medicalSnapshot = getOrderMedicalSnapshot(originalOrder, newItems);
+  const shippingAddressId = originalOrder.shippingAddress?._id || originalOrder.shippingAddress || null;
 
   const newOrder = await Order.create({
     patient: patient._id,
     prescription: originalOrder.prescription || null,
     items: newItems,
-    shippingAddress: originalOrder.shippingAddress._id || originalOrder.shippingAddress,
+    shippingAddress: shippingAddressId,
     billingAddress: originalOrder.billingAddress || null,
     billingAddressSameAsShipping: originalOrder.billingAddressSameAsShipping !== false,
     condition: medicalSnapshot.condition,
@@ -849,10 +859,10 @@ exports.createOrder = async (userId, data) => {
 
     subtotal = cart.subtotal;
     tax = 0;
-    consultantFees = 34.99;
+    consultantFees = getConsultantFeesForItems(items);
     // cart.tax || (subtotal * 0.03);
     discount = cart.discount || 0;
-    shippingCharges = getShippingChargesForItems(cart.items.filter(item => !item.isSaved));
+    shippingCharges = getShippingChargesForItems(items);
     couponCode = cart.couponCode;
   } else {
     // Legacy: If prescription provided, load it
@@ -996,60 +1006,73 @@ exports.createOrder = async (userId, data) => {
     subtotal = data.subtotal || items.reduce((sum, item) => sum + item.totalPrice, 0);
     shippingCharges = getShippingChargesForItems(items);
     tax = 0;
-    consultantFees = 34.99;
+    consultantFees = getConsultantFeesForItems(items);
     // data.tax || (subtotal * 0.18); // 18% GST or 3% for cart
     discount = data.discount || 0;
   }
 
   const medicalSnapshot = getOrderMedicalSnapshot(data, items);
+  const requiresShippingAddress = hasShippableItems(items);
   const totalAmount = data.totalAmount || (subtotal + shippingCharges + tax + consultantFees - discount);
 
   // Handle shipping address - can be provided as object or ID
   let address = null;
-  if (data.shippingAddress && typeof data.shippingAddress === 'object') {
-    // Extract firstName and lastName
-    const firstName = data.shippingAddress.firstName || '';
-    const lastName = data.shippingAddress.lastName || '';
-    const fullName = data.shippingAddress.fullName || `${firstName} ${lastName}`.trim() || 'Unknown';
+  if (requiresShippingAddress) {
+    if (data.shippingAddress && typeof data.shippingAddress === 'object') {
+      // Extract firstName and lastName
+      const firstName = data.shippingAddress.firstName || '';
+      const lastName = data.shippingAddress.lastName || '';
+      const fullName = data.shippingAddress.fullName || `${firstName} ${lastName}`.trim() || 'Unknown';
 
-    const addressInfo = await HWHelper.getCustomer(patient.hw_customer_id);
+      let hwAddressId;
+      if (patient.hw_customer_id) {
+        try {
+          const addressInfo = await HWHelper.getCustomer(patient.hw_customer_id);
+          hwAddressId = addressInfo?.shipping_address_id;
+        } catch (error) {
+          logger.warn('Unable to fetch HW customer while creating shipping address', {
+            patientId: patient._id,
+            hwCustomerId: patient.hw_customer_id,
+            error: error.message
+          });
+        }
+      }
 
-    console.log(addressInfo, 'Address Info in Create Order by Patient');
-
-    // Create new address from shippingAddress object with all required fields
-    address = await Address.create({
-      patient: patient._id,
-      type: data.shippingAddress.type || 'home',
-      firstName: firstName || fullName.split(' ')[0] || 'Unknown',
-      lastName: lastName || fullName.split(' ').slice(1).join(' ') || '',
-      email: data.shippingAddress.email || '',
-      fullName: fullName,
-      phoneNumber: data.shippingAddress.phoneNumber || data.shippingAddress.phone || '',
-      countryCode: data.shippingAddress.countryCode || '+91',
-      addressLine1: data.shippingAddress.addressLine1 || data.shippingAddress.streetAddress || data.shippingAddress.streetAddress1 || '',
-      addressLine2: data.shippingAddress.addressLine2 || data.shippingAddress.streetAddress2 || '',
-      city: data.shippingAddress.city || '',
-      state: data.shippingAddress.state || data.shippingAddress.stateProvince || '',
-      postalCode: data.shippingAddress.postalCode || data.shippingAddress.zipCode || '',
-      country: data.shippingAddress.country || 'India',
-      isDefault: data.shippingAddress.isDefault || false,
-      hw_address_id: addressInfo.shipping_address_id,
-    });
-    logger.info('Shipping address created for order', { addressId: address._id, patientId: patient._id });
-  } else if (data.shippingAddressId) {
-    // Use existing address by ID
-    address = await Address.findOne({
-      _id: data.shippingAddressId,
-      patient: patient._id
-    });
-    if (!address) throw new AppError('Shipping address not found', 404);
-  } else {
-    throw new AppError('Shipping address is required (provide shippingAddress object or shippingAddressId)', 400);
+      // Create new address from shippingAddress object with all required fields
+      address = await Address.create({
+        patient: patient._id,
+        type: data.shippingAddress.type || 'home',
+        firstName: firstName || fullName.split(' ')[0] || 'Unknown',
+        lastName: lastName || fullName.split(' ').slice(1).join(' ') || '',
+        email: data.shippingAddress.email || '',
+        fullName: fullName,
+        phoneNumber: data.shippingAddress.phoneNumber || data.shippingAddress.phone || '',
+        countryCode: data.shippingAddress.countryCode || '+91',
+        addressLine1: data.shippingAddress.addressLine1 || data.shippingAddress.streetAddress || data.shippingAddress.streetAddress1 || '',
+        addressLine2: data.shippingAddress.addressLine2 || data.shippingAddress.streetAddress2 || '',
+        city: data.shippingAddress.city || '',
+        state: data.shippingAddress.state || data.shippingAddress.stateProvince || '',
+        postalCode: data.shippingAddress.postalCode || data.shippingAddress.zipCode || '',
+        country: data.shippingAddress.country || 'India',
+        isDefault: data.shippingAddress.isDefault || false,
+        ...(hwAddressId ? { hw_address_id: hwAddressId } : {})
+      });
+      logger.info('Shipping address created for order', { addressId: address._id, patientId: patient._id });
+    } else if (data.shippingAddressId) {
+      // Use existing address by ID
+      address = await Address.findOne({
+        _id: data.shippingAddressId,
+        patient: patient._id
+      });
+      if (!address) throw new AppError('Shipping address not found', 404);
+    } else {
+      throw new AppError('Shipping address is required (provide shippingAddress object or shippingAddressId)', 400);
+    }
   }
 
   // Prepare billing address (according to checkout page)
   let billingAddress = null;
-  let billingAddressSameAsShipping = data.billingAddressSameAsShipping !== false; // Default true
+  let billingAddressSameAsShipping = requiresShippingAddress && data.billingAddressSameAsShipping !== false;
 
   if (data.billingAddressSameAsShipping === false && data.billingAddress) {
     // Billing address is different from shipping
@@ -1065,29 +1088,28 @@ exports.createOrder = async (userId, data) => {
       zipCode: data.billingAddress.zipCode || data.billingAddress.postalCode || ''
     };
     billingAddressSameAsShipping = false;
+  } else if (billingAddressSameAsShipping && address) {
+    // Billing address same as shipping (default for shippable orders)
+    billingAddress = {
+      firstName: address.firstName || address.fullName?.split(' ')[0] || '',
+      lastName: address.lastName || address.fullName?.split(' ').slice(1).join(' ') || '',
+      email: address.email || '',
+      phoneNumber: address.phoneNumber || '',
+      streetAddress: address.addressLine1 || '',
+      streetAddress2: address.addressLine2 || '',
+      city: address.city || '',
+      state: address.state || '',
+      zipCode: address.postalCode || ''
+    };
   } else {
-    // Billing address same as shipping (default)
-    billingAddressSameAsShipping = true;
-    if (address) {
-      billingAddress = {
-        firstName: address.firstName || address.fullName?.split(' ')[0] || '',
-        lastName: address.lastName || address.fullName?.split(' ').slice(1).join(' ') || '',
-        email: address.email || '',
-        phoneNumber: address.phoneNumber || '',
-        streetAddress: address.addressLine1 || '',
-        streetAddress2: address.addressLine2 || '',
-        city: address.city || '',
-        state: address.state || '',
-        zipCode: address.postalCode || ''
-      };
-    }
+    billingAddressSameAsShipping = false;
   }
 
   const order = await Order.create({
     patient: patient._id,
     prescription: data.prescriptionId || null,
     items,
-    shippingAddress: address._id,
+    shippingAddress: address?._id || null,
     billingAddress: billingAddress,
     billingAddressSameAsShipping: billingAddressSameAsShipping,
     condition: medicalSnapshot.condition,
@@ -1120,12 +1142,14 @@ exports.createOrder = async (userId, data) => {
     fromCart: data.createFromCart || false
   });
 
-  // Touch IntakeForm so it bubbles up in recent consultations
-  await IntakeFormModel.findOneAndUpdate(
-    { patient: patient._id },
-    { $set: { updatedAt: new Date() } },
-    { timestamps: false }
-  );
+  // Only consultation-related orders should bubble in doctor consultation flows.
+  if (hasShippableItems(items)) {
+    await IntakeFormModel.findOneAndUpdate(
+      { patient: patient._id },
+      { $set: { updatedAt: new Date() } },
+      { timestamps: false }
+    );
+  }
 
   // If order created from cart, clear cart
   if (data.createFromCart) {
@@ -1160,7 +1184,9 @@ exports.createOrder = async (userId, data) => {
 
 exports.getOrdersForDoctor = async (doctorId, query = {}) => {
   const { page, limit, skip } = parsePagination(query);
-  const filter = {};
+  const filter = {
+    items: { $elemMatch: { productType: { $ne: 'doctors_note' } } }
+  };
 
   if (query.status) filter.status = query.status;
   if (query.paymentStatus) filter.paymentStatus = query.paymentStatus;
@@ -1261,6 +1287,10 @@ exports.createOrderByDoctor = async (doctorId, orderId) => {
 
   if (!order) {
     throw new AppError(`Order ${orderId} not found`, 404);
+  }
+
+  if (!hasShippableItems(order.items || [])) {
+    throw new AppError('Doctor review is not required for excuse-note orders', 400);
   }
 
   // Get patient - order.patient should already have patient data from populate
@@ -1379,6 +1409,10 @@ exports.createPrescriptionOrderByDoctor = async (doctorId, data) => {
 
   if (!order) {
     throw new AppError(`Order ${orderId} not found`, 404);
+  }
+
+  if (!hasShippableItems(order.items || [])) {
+    throw new AppError('Doctor review is not required for excuse-note orders', 400);
   }
 
   if (order.status === 'confirmed') {

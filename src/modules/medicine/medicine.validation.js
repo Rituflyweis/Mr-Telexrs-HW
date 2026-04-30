@@ -29,7 +29,7 @@ const normalizeHealthTypeValues = (value) => {
     }
 
     if (typeof item === 'object' && !Array.isArray(item)) {
-      const normalizedFromObject = item.slug || item._id || item.id;
+      const normalizedFromObject = item.slug || item._id || item.id || item.value;
       if (normalizedFromObject !== undefined && normalizedFromObject !== null) {
         const normalizedString = String(normalizedFromObject).trim();
         if (normalizedString) values.push(normalizedString);
@@ -54,7 +54,7 @@ const hasCategoryValue = (value) => {
   if (value === undefined || value === null) return false;
   if (typeof value === 'string') return value.trim().length > 0;
   if (typeof value === 'object' && !Array.isArray(value)) {
-    return Boolean(value._id || value.id || value.slug);
+    return Boolean(value._id || value.id || value.slug || value.value);
   }
   return false;
 };
@@ -65,7 +65,7 @@ const validateHealthCategoryValue = (value) => {
   const parsed = parseIfString(value);
   let normalized = parsed;
   if (typeof parsed === 'object' && !Array.isArray(parsed)) {
-    normalized = parsed._id || parsed.id || parsed.slug;
+    normalized = parsed._id || parsed.id || parsed.slug || parsed.value;
   }
 
   if (normalized === undefined || normalized === null) {
@@ -257,9 +257,14 @@ exports.addMedicineValidation = [
   // Additional fields
   body('category')
     .optional()
-    .isString()
-    .withMessage('Category must be a string')
-    .trim(),
+    .custom((value) => {
+      if (value === undefined || value === null || value === '') return true;
+      if (typeof value === 'string') return true;
+      if (typeof value === 'object' && !Array.isArray(value)) {
+        return Boolean(value._id || value.id || value.slug || value.value);
+      }
+      throw new Error('Category must be a string or object');
+    }),
   
   body('stock')
     .optional()

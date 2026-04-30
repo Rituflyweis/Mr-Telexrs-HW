@@ -1,10 +1,15 @@
 const { body } = require('express-validator');
 
+const hasNonEmptyValue = (value) => {
+  if (value === undefined || value === null) return false;
+  if (typeof value === 'string') return value.trim() !== '';
+  return true;
+};
+
 // Process checkout validation
 exports.processCheckoutValidation = [
   body('shippingAddressId')
-    .notEmpty()
-    .withMessage('Shipping address ID is required')
+    .optional({ checkFalsy: true })
     .isMongoId()
     .withMessage('Invalid shipping address ID'),
   
@@ -19,11 +24,17 @@ exports.processCheckoutValidation = [
     .isBoolean()
     .withMessage('Billing address same as shipping must be a boolean'),
   
-  // Conditional validation: if billingAddressSameAsShipping is false, billing address is required
-  body('billingAddress')
-    .if((value, { req }) => req.body.billingAddressSameAsShipping === false)
-    .notEmpty()
-    .withMessage('Billing address is required when different from shipping address'),
+  // Conditional validation: only require billing address when shipping exists and billing differs
+  body('billingAddress').custom((value, { req }) => {
+    if (
+      req.body.billingAddressSameAsShipping === false &&
+      hasNonEmptyValue(req.body.shippingAddressId) &&
+      !hasNonEmptyValue(value)
+    ) {
+      throw new Error('Billing address is required when different from shipping address');
+    }
+    return true;
+  }),
   
   // Billing address fields (required if billingAddressSameAsShipping is false)
   body('billingAddress.firstName')
@@ -103,4 +114,3 @@ exports.processCheckoutValidation = [
     .isString()
     .withMessage('Card holder name must be a string')
 ];
-

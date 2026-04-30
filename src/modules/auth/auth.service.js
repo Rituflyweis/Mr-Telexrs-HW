@@ -179,11 +179,15 @@ exports.deactivateUser = async (userId) => {
  */
 exports.forgotPassword = async (identifier, countryCode) => {
   const otpService = require('./otp.service');
-  const otpCode = await otpService.sendPasswordResetOtp(identifier, countryCode);
+  const otpResult = await otpService.sendPasswordResetOtp(identifier, countryCode);
 
   return {
     message: isEmail(identifier) ? 'OTP sent to your email address' : 'OTP sent to your phone number',
-    otp: otpCode
+    otp: otpResult.otp,
+    delivery: {
+      emailSent: otpResult.emailSent,
+      smsSent: otpResult.smsSent
+    }
   };
 };
 

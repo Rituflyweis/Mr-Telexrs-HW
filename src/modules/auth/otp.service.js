@@ -165,11 +165,14 @@ exports.sendPasswordResetOtp = async (identifier, countryCode) => {
   const rawResetPhone = isEmailId ? user.phoneNumber : identifier;
   const resetPhoneCC = isEmailId ? user.countryCode : countryCode;
   const sendPhone = rawResetPhone ? formatE164(resetPhoneCC || user.countryCode, rawResetPhone) : null;
+  let smsSent = false;
+  let emailSent = false;
 
   if (sendPhone) {
     try {
       await smsService.sendOtpSMS(sendPhone, otpCode);
       console.log(`📲 Password reset OTP sent via SMS to ${sendPhone}`);
+      smsSent = true;
     } catch (error) {
       console.error(`Failed to send Password Reset OTP SMS to ${sendPhone}:`, error.message);
     }
@@ -179,12 +182,29 @@ exports.sendPasswordResetOtp = async (identifier, countryCode) => {
     try {
       await emailService.sendOtpEmail(sendEmail, otpCode, 'password-reset');
       console.log(`📧 Password reset OTP sent to email ${sendEmail}`);
+      emailSent = true;
     } catch (error) {
       console.error(`Failed to send Password Reset OTP email to ${sendEmail}:`, error.message);
     }
   }
 
-  return otpCode;
+  if (isEmailId && !emailSent) {
+    throw new AppError('Failed to deliver OTP to email. Please try again later.', 500);
+  }
+
+  if (!isEmailId && !smsSent) {
+    throw new AppError('Failed to deliver OTP to phone number. Please try again later.', 500);
+  }
+
+  if (!smsSent && !emailSent) {
+    throw new AppError('Failed to deliver password reset OTP. Please try again later.', 500);
+  }
+
+  return {
+    otp: otpCode,
+    emailSent,
+    smsSent
+  };
 };
 
 /**
