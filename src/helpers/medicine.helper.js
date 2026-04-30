@@ -64,6 +64,39 @@ const parseBoolean = (value, defaultValue = false) => {
 };
 
 /**
+ * Normalize rating query input into a clean number array.
+ * Supports single values, comma-separated strings, repeated query params, and JSON arrays.
+ * @param {any} value
+ * @returns {number[]}
+ */
+const normalizeRatingValues = (value) => {
+  if (value === undefined || value === null) return [];
+
+  const parsed = parseIfString(value);
+  const rawValues = Array.isArray(parsed) ? parsed : [parsed];
+  const ratings = [];
+
+  rawValues.forEach(item => {
+    if (item === undefined || item === null) return;
+
+    if (typeof item === 'string') {
+      item.split(',').forEach(part => {
+        const trimmed = part.trim();
+        if (!trimmed) return;
+        const parsedRating = Number(trimmed);
+        if (!Number.isNaN(parsedRating)) ratings.push(parsedRating);
+      });
+      return;
+    }
+
+    const parsedRating = Number(item);
+    if (!Number.isNaN(parsedRating)) ratings.push(parsedRating);
+  });
+
+  return [...new Set(ratings)].filter(rating => rating >= 0 && rating <= 5);
+};
+
+/**
  * Normalize health type slug/type-id input into a clean array.
  * Supports JSON array strings, repeated form-data fields, comma-separated strings, and legacy single values.
  * @param {any} value - Health type slug/type ID input
@@ -401,12 +434,12 @@ const buildMedicineFilter = (query = {}, options = {}) => {
     }
   }
 
-  // Rating filter (exact match)
-  if (query.rating !== undefined && query.rating !== null && query.rating !== '') {
-    const ratingValue = parseFloat(query.rating);
-    if (!Number.isNaN(ratingValue)) {
-      filter.rating = ratingValue;
-    }
+  // Rating filter (exact match / multi-select)
+  const ratingValues = normalizeRatingValues(query.rating);
+  if (ratingValues.length === 1) {
+    filter.rating = ratingValues[0];
+  } else if (ratingValues.length > 1) {
+    filter.rating = { $in: ratingValues };
   }
 
   // Availability/Status filter

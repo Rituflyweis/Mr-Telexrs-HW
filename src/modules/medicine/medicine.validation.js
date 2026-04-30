@@ -100,6 +100,48 @@ const validateHealthTypeValues = (value, { req }, fieldName) => {
   return true;
 };
 
+const normalizeRatingValues = (value) => {
+  if (value === undefined || value === null) return [];
+
+  const parsed = parseIfString(value);
+  const rawValues = Array.isArray(parsed) ? parsed : [parsed];
+  const values = [];
+
+  rawValues.forEach(item => {
+    if (item === undefined || item === null) return;
+
+    if (typeof item === 'string') {
+      item.split(',').forEach(part => {
+        const trimmed = part.trim();
+        if (trimmed) values.push(trimmed);
+      });
+      return;
+    }
+
+    values.push(String(item).trim());
+  });
+
+  return values.filter(Boolean);
+};
+
+const validateRatingQuery = (value) => {
+  const ratings = normalizeRatingValues(value);
+  if (ratings.length === 0) {
+    throw new Error('Rating must be a number between 0 and 5');
+  }
+
+  const invalid = ratings.find(raw => {
+    const parsed = Number(raw);
+    return Number.isNaN(parsed) || parsed < 0 || parsed > 5;
+  });
+
+  if (invalid !== undefined) {
+    throw new Error('Rating must be a number between 0 and 5');
+  }
+
+  return true;
+};
+
 const requiredOnCreateOrPresentOnUpdate = (value, { req }) => {
   return req.method !== 'PUT' || value !== undefined;
 };
@@ -419,8 +461,7 @@ exports.getAllMedicinesValidation = [
     .withMessage('Category must be a string'),
   query('rating')
     .optional()
-    .isFloat({ min: 0, max: 5 })
-    .withMessage('Rating must be between 0 and 5'),
+    .custom(validateRatingQuery),
   query('search')
     .optional()
     .isString()

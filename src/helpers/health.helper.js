@@ -46,6 +46,38 @@ const isValidObjectId = (id) => {
   return mongoose.Types.ObjectId.isValid(id);
 };
 
+/**
+ * Normalize rating query input into a clean number array.
+ * Supports single values, comma-separated strings, and repeated query params.
+ * @param {any} value
+ * @returns {number[]}
+ */
+const normalizeRatingValues = (value) => {
+  if (value === undefined || value === null) return [];
+
+  const rawValues = Array.isArray(value) ? value : [value];
+  const ratings = [];
+
+  rawValues.forEach(item => {
+    if (item === undefined || item === null) return;
+
+    if (typeof item === 'string') {
+      item.split(',').forEach(part => {
+        const trimmed = part.trim();
+        if (!trimmed) return;
+        const parsed = Number(trimmed);
+        if (!Number.isNaN(parsed)) ratings.push(parsed);
+      });
+      return;
+    }
+
+    const parsed = Number(item);
+    if (!Number.isNaN(parsed)) ratings.push(parsed);
+  });
+
+  return [...new Set(ratings)].filter(rating => rating >= 0 && rating <= 5);
+};
+
 // ============ FILTER HELPERS ============
 
 /**
@@ -141,12 +173,12 @@ const buildMedicationFilter = (query = {}, options = {}) => {
       filter.salePrice.$lte = parseFloat(maxPrice);
     }
   }
-  // Rating filter (exact match)
-  if (rating !== undefined && rating !== null && rating !== '') {
-    const ratingValue = parseFloat(rating);
-    if (!Number.isNaN(ratingValue)) {
-      filter.rating = ratingValue;
-    }
+  // Rating filter (exact match / multi-select)
+  const ratingValues = normalizeRatingValues(rating);
+  if (ratingValues.length === 1) {
+    filter.rating = ratingValues[0];
+  } else if (ratingValues.length > 1) {
+    filter.rating = { $in: ratingValues };
   }
   // Status filter
   if (status) {

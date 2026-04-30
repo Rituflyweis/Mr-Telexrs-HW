@@ -8,6 +8,47 @@ const isSlugOrObjectId = (value) => {
   return isObjectId || isSlug;
 };
 
+const normalizeRatingValues = (value) => {
+  if (value === undefined || value === null) return [];
+
+  const rawValues = Array.isArray(value) ? value : [value];
+  const values = [];
+
+  rawValues.forEach(item => {
+    if (item === undefined || item === null) return;
+
+    if (typeof item === 'string') {
+      item.split(',').forEach(part => {
+        const trimmed = part.trim();
+        if (trimmed) values.push(trimmed);
+      });
+      return;
+    }
+
+    values.push(String(item).trim());
+  });
+
+  return values.filter(Boolean);
+};
+
+const validateRatingQuery = (value) => {
+  const ratings = normalizeRatingValues(value);
+  if (ratings.length === 0) {
+    throw new Error('Rating must be a number between 0 and 5');
+  }
+
+  const invalid = ratings.find(raw => {
+    const parsed = Number(raw);
+    return Number.isNaN(parsed) || parsed < 0 || parsed > 5;
+  });
+
+  if (invalid !== undefined) {
+    throw new Error('Rating must be a number between 0 and 5');
+  }
+
+  return true;
+};
+
 // Get all health categories validation
 exports.getAllHealthCategoriesValidation = [
   query('search')
@@ -82,6 +123,9 @@ exports.getMedicationsByCategoryIdValidation = [
     .optional()
     .isFloat({ min: 0 })
     .withMessage('Maximum price must be a positive number'),
+  query('rating')
+    .optional()
+    .custom(validateRatingQuery),
   query('status')
     .optional()
     .isIn(['in_stock', 'low_stock', 'out_of_stock', 'discontinued'])
@@ -134,6 +178,9 @@ exports.getMedicationsValidation = [
     .optional()
     .isFloat({ min: 0 })
     .withMessage('maxPrice must be a positive number'),
+  query('rating')
+    .optional()
+    .custom(validateRatingQuery),
   query('status')
     .optional()
     .isIn(['in_stock', 'low_stock', 'out_of_stock'])
