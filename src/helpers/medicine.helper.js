@@ -401,6 +401,14 @@ const buildMedicineFilter = (query = {}, options = {}) => {
     }
   }
 
+  // Rating filter (minimum rating)
+  if (query.rating !== undefined && query.rating !== null && query.rating !== '') {
+    const ratingValue = parseFloat(query.rating);
+    if (!Number.isNaN(ratingValue)) {
+      filter.rating = { $gte: ratingValue };
+    }
+  }
+
   // Availability/Status filter
   const { availability, inStock, status } = query;
   if (availability) {

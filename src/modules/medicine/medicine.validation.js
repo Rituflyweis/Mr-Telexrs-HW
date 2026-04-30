@@ -417,6 +417,10 @@ exports.getAllMedicinesValidation = [
     .optional()
     .isString()
     .withMessage('Category must be a string'),
+  query('rating')
+    .optional()
+    .isFloat({ min: 0, max: 5 })
+    .withMessage('Rating must be between 0 and 5'),
   query('search')
     .optional()
     .isString()
