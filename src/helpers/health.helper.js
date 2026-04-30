@@ -141,10 +141,11 @@ const buildMedicationFilter = (query = {}, options = {}) => {
       filter.salePrice.$lte = parseFloat(maxPrice);
     }
   }
-  if (rating !== undefined) {
-    filter.rating = {};
-    if (rating !== undefined) {
-      filter.rating.$gte = parseFloat(rating);
+  // Rating filter (exact match)
+  if (rating !== undefined && rating !== null && rating !== '') {
+    const ratingValue = parseFloat(rating);
+    if (!Number.isNaN(ratingValue)) {
+      filter.rating = ratingValue;
     }
   }
   // Status filter

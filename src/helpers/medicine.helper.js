@@ -401,11 +401,11 @@ const buildMedicineFilter = (query = {}, options = {}) => {
     }
   }
 
-  // Rating filter (minimum rating)
+  // Rating filter (exact match)
   if (query.rating !== undefined && query.rating !== null && query.rating !== '') {
     const ratingValue = parseFloat(query.rating);
     if (!Number.isNaN(ratingValue)) {
-      filter.rating = { $gte: ratingValue };
+      filter.rating = ratingValue;
     }
   }
 
