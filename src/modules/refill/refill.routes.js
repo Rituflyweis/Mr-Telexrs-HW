@@ -54,6 +54,14 @@ router.put(
   refillController.skipRefill
 );
 
+// Backward-compatible alias for clients still sending POST instead of PUT
+router.post(
+  '/refills/:id/skip',
+  refillValidation.skipRefillValidation,
+  validate,
+  refillController.skipRefill
+);
+
 // Get refill by ID (must come last to avoid route conflicts) - PUBLIC
 router.get(
   '/refills/:id',
