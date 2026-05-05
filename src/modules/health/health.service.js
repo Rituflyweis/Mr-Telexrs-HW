@@ -208,16 +208,6 @@ exports.updateHealthCategory = async (categoryId, data, userId) => {
     throw new AppError('Health category not found', 404);
   }
 
-  // Check for duplicates (excluding current category)
-  if (data.name || data.slug) {
-    await checkDuplicateCategory(
-      HealthCategory, 
-      data.name || category.name, 
-      data.slug || category.slug, 
-      categoryId
-    );
-  }
-
   // Update fields (exclude createdBy)
   Object.keys(data).forEach(key => {
     if (data[key] !== undefined && key !== 'createdBy') {
