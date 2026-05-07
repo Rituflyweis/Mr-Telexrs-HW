@@ -255,6 +255,38 @@ const orderSchema = new mongoose.Schema(
       type: Number
     },
 
+    hw_split_order_id: {
+      type: Number
+    },
+
+    hw_status: {
+      type: String
+    },
+
+    hw_status_message: {
+      type: String
+    },
+
+    hw_status_updated_at: {
+      type: Date
+    },
+
+    last_tracking_sync: {
+      type: Date
+    },
+
+    shipments: [
+      {
+        shipment_id: String,
+        tracking_number: String,
+        carrier_code: String,
+        carrier_title: String,
+        items_shipped: Number,
+        status: String,
+        updated_at: Date
+      }
+    ],
+
     trackingNumber: String,
     estimatedDelivery: Date,
     deliveredAt: Date,

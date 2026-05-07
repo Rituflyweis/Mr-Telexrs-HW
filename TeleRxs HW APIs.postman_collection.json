@@ -1011,6 +1011,287 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "HealthWarehouse Order Journey Testing",
+      "item": [
+        {
+          "name": "1. Set Status - Processing",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"processing\",\n  \"message\": \"Test: order received by HealthWarehouse.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/healthwarehouse/test-orders/{{mongo_order_id}}/journey",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "healthwarehouse",
+                "test-orders",
+                "{{mongo_order_id}}",
+                "journey"
+              ]
+            },
+            "description": "Test/dev only. Updates the local HealthWarehouse journey for a Mongo order ID so frontend can verify status and tracking UI."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Set Status - Transfer Success",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"transfer_success\",\n  \"message\": \"Test: prescription transfer succeeded.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/healthwarehouse/test-orders/{{mongo_order_id}}/journey",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "healthwarehouse",
+                "test-orders",
+                "{{mongo_order_id}}",
+                "journey"
+              ]
+            },
+            "description": "Test/dev only. Updates the local HealthWarehouse journey for a Mongo order ID so frontend can verify status and tracking UI."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Set Status - Transfer Failure",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"transfer_failure\",\n  \"message\": \"Test: prescription transfer failed.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/healthwarehouse/test-orders/{{mongo_order_id}}/journey",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "healthwarehouse",
+                "test-orders",
+                "{{mongo_order_id}}",
+                "journey"
+              ]
+            },
+            "description": "Test/dev only. Updates the local HealthWarehouse journey for a Mongo order ID so frontend can verify status and tracking UI."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Set Status - Dispensed",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"dispensed\",\n  \"message\": \"Test: medication dispensed.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/healthwarehouse/test-orders/{{mongo_order_id}}/journey",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "healthwarehouse",
+                "test-orders",
+                "{{mongo_order_id}}",
+                "journey"
+              ]
+            },
+            "description": "Test/dev only. Updates the local HealthWarehouse journey for a Mongo order ID so frontend can verify status and tracking UI."
+          },
+          "response": []
+        },
+        {
+          "name": "5. Set Status - Complete With Tracking",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"complete\",\n  \"tracking_number\": \"{{tracking_number}}\",\n  \"shipment_id\": \"{{shipment_id}}\",\n  \"carrier_code\": \"usps\",\n  \"carrier_title\": \"United States Postal Service\",\n  \"items_shipped\": 1,\n  \"message\": \"Test: order shipped with tracking.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/healthwarehouse/test-orders/{{mongo_order_id}}/journey",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "healthwarehouse",
+                "test-orders",
+                "{{mongo_order_id}}",
+                "journey"
+              ]
+            },
+            "description": "Test/dev only. Updates the local HealthWarehouse journey for a Mongo order ID so frontend can verify status and tracking UI."
+          },
+          "response": []
+        },
+        {
+          "name": "6. Set Status - Canceled",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"canceled\",\n  \"message\": \"Test: order canceled.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/healthwarehouse/test-orders/{{mongo_order_id}}/journey",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "healthwarehouse",
+                "test-orders",
+                "{{mongo_order_id}}",
+                "journey"
+              ]
+            },
+            "description": "Test/dev only. Updates the local HealthWarehouse journey for a Mongo order ID so frontend can verify status and tracking UI."
+          },
+          "response": []
+        }
+      ]
     }
   ],
   "auth": {
@@ -1071,6 +1352,18 @@
     {
       "key": "state_id",
       "value": ""
+    },
+    {
+      "key": "mongo_order_id",
+      "value": ""
+    },
+    {
+      "key": "tracking_number",
+      "value": "TESTTRACK123456"
+    },
+    {
+      "key": "shipment_id",
+      "value": "TEST-SHIP-001"
     }
   ]
 }

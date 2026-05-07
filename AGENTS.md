@@ -1,65 +1,16 @@
 <claude-mem-context>
 # Memory Context
 
-# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-05-02 10:23pm GMT+5:30
+# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-05-07 3:28pm GMT+5:30
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (19,733t read) | 594,819t work | 97% savings
+Stats: 50 obs (19,410t read) | 625,009t work | 97% savings
 
-### Apr 29, 2026
-S13 Improve error handling for HealthWarehouse customer creation to surface better diagnostic info (Apr 29 at 1:41 PM)
-S9 HealthWarehouse customer creation error — diagnosed "missing or invalid state in customer address" 400 causing prescription order 500 (Apr 29 at 2:11 PM)
-S10 Add master OTP "000000" to bypass Twilio trial account SMS limitations across all auth flows (Apr 29 at 2:11 PM)
-S11 Revert phone number validation regression from last commit that broke login screen phone submission (Apr 29 at 2:33 PM)
-S12 Fix login-otp returning 500 due to both Twilio SMS and Gmail SMTP failing in production (Apr 29 at 2:37 PM)
-S14 Improve error handling for HealthWarehouse customer creation — add detailed logging to diagnose state field issue (Apr 29 at 2:41 PM)
-S15 Diagnosed HealthWarehouse "invalid state" error from production logs — root cause confirmed as Indian address with state "Delhi" sent to US-only pharmacy API (Apr 29 at 2:48 PM)
-S16 Manually fix test patient address in production DB — delete duplicates and update to valid US address for HealthWarehouse compatibility (Apr 29 at 2:55 PM)
-S17 Retire duplicate us-state module and consolidate US state management onto existing /patient/states endpoint with StateAvailability as single source of truth (Apr 29 at 3:00 PM)
-S18 Consolidate US state management onto single /patient/states endpoint — retire us-state module, make StateAvailability DB the single source of truth, add DC, default all available (Apr 29 at 3:27 PM)
 ### Apr 30, 2026
-154 5:37p 🔴 Schema Paths Verified — badge/caption Confirmed in Both Category and Types Subdocument
-155 " 🟣 health.helper.js Updated to Explicitly Surface badge/caption in GET Responses
-156 " 🔴 Full badge/caption Fix Verified and Ready — 3 Files Changed, Runtime Test Passed
-160 " ⚖️ Frontend API Contract Documented — PUT /categories/:id Request Body Shape
-157 5:54p 🔵 Medicine Rating Field — Data Type and Update Behavior Investigation
-158 " 🔵 Medicine Rating Bug Root Cause — Missing from Create Payload, No parseFloat on Update
-159 " 🔴 Medicine Rating Always Zero on Create — buildMedicineData Omits Rating Field
-161 5:55p 🔵 Medicine Module Architecture — All Routes Public, Full Create/Update Flow Confirmed
-173 " 🔵 Production GET /categories Confirmed Working — 7 Categories, badge/caption Returning null
-174 " 🔐 Admin JWT Token Shared in Session for API Testing
-162 6:17p ⚖️ Rating Field Fix Approach — Include in buildMedicineData Using Sent Value
-163 " 🔴 Medicine Rating Create Bug Fixed — Added rating to buildMedicineData
-164 6:18p 🔵 Doctor Panel Recent Consultations API Investigation
-165 " 🔵 Mr-Telerxs Backend: Recent Consultations Code Architecture
-166 " 🔵 Recent Consultations Filter Logic: Status Gate and Pagination Strategy Differences
-167 " 🔵 formatConsultation Helper Uses createdAt Only; Patient Name Hardcoded from basicInformation
-168 6:19p 🔵 Root Cause Confirmed: Missing April 28 Consultations Have status='draft', Not 'submitted'
-169 " 🔵 Full Consultation Status Breakdown Confirms 4 Submitted vs 7 Draft for Doctor
-170 " 🔵 Recent Consultations updatedAt Display Confirmed: Jan-Created Record Shows Apr 29 Date
-171 " 🔵 Uncommitted Working Tree Changes in Health/Medicine Modules
-172 " 🔵 Doctor Name Empty String Bug: doctor.user Not Populated in getConsultationsByDoctorId
-179 9:01p 🔵 Patient Orders API Investigation — Status Stuck at "processing"
-180 " 🔵 Dr Excuse Order Flow — productType "doctors_note" and Initial Status "processing"
-181 " 🔵 Root Cause Found: Order Status Stays "processing" Due to Inconsistent Payment Service Logic
-182 " 🔴 Confirmed Bug: verifyPayment Sets order.status = "pending" Instead of "confirmed" After Successful Payment
-184 " 🔵 Production Server flyweisgroup.in Not Responding to API Calls
-183 9:02p 🔵 Admin JWT Token Valid Until 2026-05-06 — Live API Test Initiated
-185 9:03p 🔵 Production flyweisgroup.in Confirmed Down — curl exit code 28
-186 " 🔵 Production Server IS Up — Previous Timeouts Were Token-Related, Not Server Down
-187 " 🔵 Admin Token Accepted by GET /patient/orders — Returns Empty Orders Array
-188 9:04p 🔵 Order Model Schema: "processing" Valid for status but NOT for paymentStatus
-189 " 🔵 Order Routes Shared Between Patient and Doctor — Same Router Mounted at Both Prefixes
-190 " 🔵 POST /patient/orders for Dr Excuse Order Timed Out on First Attempt
-191 " 🔵 POST /patient/orders Times Out at 30s — Admin Token Has No Patient Profile
-192 " 🔴 Validation Bug Confirmed on Production: Shipping Address Required Even for doctors_note Orders
-193 9:05p 🔵 Live Test Confirms: Payment Intent Returns "processing" Status — Root Cause of Reported Bug Identified
-194 " 🔵 Server Path Revealed + Dedicated doctors-note Module Exists + confirmPayment Broken on Production
-195 9:06p 🔵 Admin Reports mapStatus Maps "confirmed" to "Processing" Display Label
-196 " 🔵 Patient List Retrieved — Dipesh Joshi Patient Profile Found with HealthWarehouse IDs
+196 9:06p 🔵 Patient List Retrieved — Dipesh Joshi Patient Profile Found with HealthWarehouse IDs
 197 " 🔴 admin-patient-transaction.service.js Selects Non-Existent Field "orderStatus" — Should Be "status"
 198 9:07p 🔵 Production Database Has 41 Total Patients — Small Deployment
 199 " 🔵 Admin Patient Transactions API Returns Different Response Shape Than Expected
@@ -71,6 +22,57 @@ S18 Consolidate US state management onto single /patient/states endpoint — ret
 205 " 🔵 DB State: Several Footer Sections in Draft — Contact, Address, Social-Media All Draft
 206 9:30p 🔵 Footer/Newsletter Bug Investigation Conclusion — Backend Newsletter Code Is Correct
 207 " 🔵 Two TeleRxs Backend Repos Exist — Mr-Telerxs-Backend is a Separate Project
+### May 4, 2026
+284 3:13p 🔵 HealthWarehouse API Rejects Indian Address in "Send to Pharmacy" Flow
+352 11:29p 🔵 Notes API Fetches All Notes Across All Consultations
+353 " 🔵 getNotes Controller Fetches All Notes When intakeFormId Query Param Omitted
+### May 5, 2026
+424 4:26p 🔵 409 Conflict on Health Category PUT — Slug Collision Root Cause
+425 " 🔵 checkDuplicateCategory Supports excludeId But Caller May Not Pass It
+426 " 🔵 updateHealthCategory Correctly Passes excludeId — 409 Is a Genuine DB Duplicate
+427 4:30p 🔵 Health Category Update Failing with 409 Conflict on Duplicate Name/Slug
+S57 Explain isActive flag behavior and fix options for 409 conflict on health category PUT update (May 5 at 4:30 PM)
+S58 Pinpoint exact conflicting document causing 409 — slug "weight-loss-metabolic-health" collision with inactive DB record (May 5 at 4:31 PM)
+S59 Fix 409 conflict on health category PUT — removed duplicate check from updateHealthCategory (May 5 at 4:34 PM)
+428 4:35p 🔵 updateHealthCategory Excludes Current Doc from Duplicate Check But checkDuplicateCategory Has No isActive Filter
+S60 Fix 409 on health category PUT — removed schema unique constraints and flagged required MongoDB index drops (May 5 at 4:35 PM)
+429 4:38p 🔵 409 Error Source Located: checkDuplicateCategory in health.helper.js Line 406
+430 " 🔵 HealthCategory Model Has MongoDB-Level unique:true on name AND slug Fields
+431 " 🔴 Removed unique:true from name and slug Fields in HealthCategory Model
+S61 Persistent 409 conflict error on healthcategories collection — duplicate key index issue (May 5 at 4:39 PM)
+S62 Fix 409 conflict error on healthcategories PUT endpoint — drop stale unique MongoDB indexes (May 5 at 4:48 PM)
+432 4:49p 🔵 MongoDB Atlas connection string found in .env
+433 " 🔵 No local mongo/mongosh CLI available; Node.js v24.12.0 present
+434 " 🔴 Dropped stale unique indexes `name_1` and `slug_1` from `healthcategories` collection
+S65 Healthware API order tracking flow after prescription order creation — how is an order tracked post "Send to prescription → Create order by doctor with prescription" on HW side? (May 5 at 4:50 PM)
+### May 7, 2026
+534 12:42a 🔵 Healthware API Order Tracking Flow Post-Prescription
+535 " 🔵 Healthware API Complete Order Tracking & Notification System
+S66 Simulating tracking ID, shipment ID, and address in the Healthwarehouse test environment (May 7 at 12:42 AM)
+536 9:59a 🔵 Healthwarehouse Test Environment: Order Status Simulation API
+S67 Healthware API Order Tracking Flow — How is the order tracked after doctor creates prescription order on HW side? (May 7 at 9:59 AM)
+537 10:02a 🔵 Healthware API Order Tracking Flow Post-Prescription
+538 10:03a 🔵 Healthware Order Tracking Architecture Traced End-to-End
+539 10:06a 🔵 Healthware-to-Local Order Status Mapping Confirmed
+540 " 🔵 No Healthwarehouse Webhook Receiver Exists — Tracking is Pull-Only
+S68 Healthware API Order Tracking Flow — Full investigation of how orders are tracked after doctor prescription creation, including status transitions, shipment data, and webhook architecture (May 7 at 10:06 AM)
+541 10:08a 🔵 Critical Bug: All HW Order Line Items Use Hardcoded product_id = 101
+542 " 🔵 Bug: cancelOrder Sets DB Status Before Checking hw_order_id
+543 " 🔵 N+1 Performance Issue: getPatientOrders Fetches HW Tracking Per Order
+544 " 🔵 createPrescriptionOrderByDoctor Full Flow Confirmed
+602 3:10p 🟣 FE Communication Message: API Integration Specification Drafted
+603 3:14p 🟣 Status Update API Endpoint Requested for Frontend Integration
+604 " 🔵 HealthWarehouse Integration Work-in-Progress State
+605 " 🟣 HealthWarehouse Controller: Webhook Handlers and Status Simulation
+606 " 🟣 updateTestOrderJourney Endpoint Added for Frontend Status Simulation
+607 3:19p ✅ Postman Collection Update + API Status Testing Documentation Requested
+608 " 🔵 Existing Postman Collection Structure for TeleRxs HW APIs
+609 " 🔵 Postman Collection Variables and Hardcoded Order ID Details
+610 " 🔵 Order Status Lifecycle and Simulate-Status API Documented in Frontend_changes.md
+611 3:20p 🔵 Collection-Level Auth Uses Hardcoded JWT Instead of Variable Reference
+612 " 🟣 Added "HealthWarehouse Order Journey Testing" Folder to Postman Collection
+613 " 🟣 Created HW_ORDER_JOURNEY_TESTING.md — Order Status Testing Guide
+614 3:21p 🔵 Broader HW Integration Branch Scope Revealed by Git Status
 
-Access 595k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 625k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>

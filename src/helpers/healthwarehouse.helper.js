@@ -1,4 +1,6 @@
 const HW = require('./../services/healthwarehouse.api');
+const Order = require('../models/Order.model');
+const HealthWarehouseEvent = require('../models/HealthWarehouseEvent.model');
 
 const createPatient = async (user, patient, hwCustomerId) => {
   const payload = {
@@ -301,6 +303,153 @@ const mapShippingMethod = (method) => {
   return mapping[method] || 'standard';
 };
 
+const normalizeHWStatus = (status) => String(status || '').trim().toLowerCase();
+
+const mapHWStatusToLocalStatus = (status, fallbackStatus) => {
+  const mapping = {
+    processing: 'confirmed',
+    transfer_success: 'confirmed',
+    transfer_failure: 'processing',
+    dispensed: 'dispensed',
+    complete: 'shipped',
+    canceled: 'cancelled'
+  };
+
+  return mapping[normalizeHWStatus(status)] || fallbackStatus;
+};
+
+const buildEventIdempotencyKey = ({
+  source,
+  eventType,
+  hwOrderId,
+  hwStatus,
+  shipment
+}) => {
+  const shipmentId = shipment?.shipment_id || shipment?.shipmentId || '';
+  const trackingNumber = shipment?.tracking_number || shipment?.trackingNumber || '';
+  const shipmentStatus = shipment?.status || '';
+
+  return [
+    source,
+    eventType,
+    hwOrderId,
+    shipmentId,
+    trackingNumber,
+    normalizeHWStatus(hwStatus || shipmentStatus)
+  ].join(':');
+};
+
+const normalizeShipment = (shipment = {}) => ({
+  shipment_id: shipment.shipment_id || shipment.shipmentId || shipment.id || '',
+  tracking_number: shipment.tracking_number || shipment.trackingNumber || '',
+  carrier_code: shipment.carrier_code || shipment.carrierCode || '',
+  carrier_title: shipment.carrier_title || shipment.carrierTitle || '',
+  items_shipped: shipment.items_shipped ?? shipment.itemsShipped,
+  status: shipment.status || '',
+  updated_at: new Date()
+});
+
+const recordHealthWarehouseEvent = async ({
+  order,
+  hwOrderId,
+  eventType,
+  source,
+  hwStatus,
+  localStatus,
+  message,
+  shipment,
+  rawPayload,
+  idempotencyKey
+}) => {
+  const normalizedShipment = shipment ? normalizeShipment(shipment) : null;
+  const key = idempotencyKey || buildEventIdempotencyKey({
+    source,
+    eventType,
+    hwOrderId,
+    hwStatus,
+    shipment: normalizedShipment
+  });
+
+  return HealthWarehouseEvent.findOneAndUpdate(
+    { idempotency_key: key },
+    {
+      $setOnInsert: {
+        order: order?._id || order || undefined,
+        hw_order_id: Number(hwOrderId),
+        event_type: eventType,
+        source,
+        hw_status: hwStatus,
+        local_status: localStatus,
+        message,
+        shipment_id: normalizedShipment?.shipment_id,
+        tracking_number: normalizedShipment?.tracking_number,
+        carrier_code: normalizedShipment?.carrier_code,
+        carrier_title: normalizedShipment?.carrier_title,
+        items_shipped: normalizedShipment?.items_shipped,
+        raw_payload: rawPayload,
+        idempotency_key: key,
+        processed_at: new Date()
+      }
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+};
+
+const applyOrderStatusFields = (order, hwStatus, message) => {
+  const normalizedStatus = normalizeHWStatus(hwStatus);
+
+  if (!normalizedStatus) {
+    return order;
+  }
+
+  order.hw_status = normalizedStatus;
+  order.status = mapHWStatusToLocalStatus(normalizedStatus, order.status);
+  order.hw_status_message = message || mapOrderStatusToText(
+    normalizedStatus,
+    ['processing', 'transfer_success', 'transfer_failure'].includes(normalizedStatus),
+    ['dispensed', 'complete'].includes(normalizedStatus)
+  );
+  order.hw_status_updated_at = new Date();
+
+  return order;
+};
+
+const mergeShipmentIntoOrder = (order, shipmentPayload = {}) => {
+  const shipment = normalizeShipment(shipmentPayload);
+
+  if (!shipment.tracking_number && !shipment.shipment_id) {
+    return null;
+  }
+
+  const currentShipments = order.shipments || [];
+  const existingIndex = currentShipments.findIndex((existing) => {
+    const existingShipmentId = existing.shipment_id || '';
+    const existingTrackingNumber = existing.tracking_number || '';
+    return (
+      (shipment.shipment_id && existingShipmentId === shipment.shipment_id) ||
+      (shipment.tracking_number && existingTrackingNumber === shipment.tracking_number)
+    );
+  });
+
+  if (existingIndex >= 0) {
+    const existingShipment = currentShipments[existingIndex].toObject?.() || currentShipments[existingIndex];
+    currentShipments[existingIndex] = {
+      ...existingShipment,
+      ...shipment
+    };
+  } else {
+    currentShipments.push(shipment);
+  }
+
+  order.shipments = currentShipments;
+
+  if (shipment.tracking_number) {
+    order.trackingNumber = shipment.tracking_number;
+  }
+
+  return shipment;
+};
+
 const buildHWOrderPayload = (order, patient, addresses) => {
   // Get shipping address
   const shippingAddress = addresses.shippingAddress || order.shippingAddress;
@@ -562,10 +711,12 @@ const getOrderTracking = async (hwOrderId) => {
     let trackingNumber = null;
 
     // Only fetch shipments if order has progressed beyond processing
-    if (isShipped || orderStatus === 'complete') {
+    if (isShipped) {
       try {
         const shipmentsData = await HW.getShipments(hwOrderId);
-        shipments = shipmentsData?.shipments?.shipments || [];
+        shipments = Array.isArray(shipmentsData?.shipments)
+          ? shipmentsData.shipments
+          : [];
         trackingNumber = shipments[0]?.tracking_number || null;
 
         trackingInfo = shipments.map(shipment => ({
@@ -658,8 +809,74 @@ const mapCarrierStatus = (status) => {
   return mapping[status] || status || 'Status unknown';
 };
 
+const applyOrderStatusUpdate = async (hwOrderId, status, {
+  message,
+  source = 'webhook',
+  rawPayload
+} = {}) => {
+  const order = await Order.findOne({ hw_order_id: Number(hwOrderId) });
+
+  if (!order) {
+    throw new Error(`Order with HW order ID ${hwOrderId} not found`);
+  }
+
+  applyOrderStatusFields(order, status, message);
+  order.last_tracking_sync = new Date();
+  await order.save();
+
+  await recordHealthWarehouseEvent({
+    order,
+    hwOrderId,
+    eventType: 'order',
+    source,
+    hwStatus: normalizeHWStatus(status),
+    localStatus: order.status,
+    message,
+    rawPayload
+  });
+
+  return order;
+};
+
+const applyShipmentUpdate = async (hwOrderId, shipmentPayload, {
+  source = 'webhook',
+  rawPayload
+} = {}) => {
+  const order = await Order.findOne({ hw_order_id: Number(hwOrderId) });
+
+  if (!order) {
+    throw new Error(`Order with HW order ID ${hwOrderId} not found`);
+  }
+
+  const shipment = mergeShipmentIntoOrder(order, shipmentPayload);
+  const shipmentStatus = normalizeHWStatus(shipmentPayload?.status);
+
+  if (shipmentStatus) {
+    applyOrderStatusFields(order, shipmentStatus, shipmentStatus === 'complete'
+      ? 'Order has been fully shipped.'
+      : undefined);
+  }
+
+  order.last_tracking_sync = new Date();
+  await order.save();
+
+  await recordHealthWarehouseEvent({
+    order,
+    hwOrderId,
+    eventType: 'shipment',
+    source,
+    hwStatus: shipmentStatus || order.hw_status,
+    localStatus: order.status,
+    message: shipmentStatus ? `Shipment status: ${shipmentStatus}` : undefined,
+    shipment,
+    rawPayload
+  });
+
+  return order;
+};
+
 // Sync tracking info to your order
-const syncTrackingToOrder = async (telRxsOrderId, hwOrderId) => {
+const syncTrackingToOrder = async (telRxsOrderId, hwOrderId, source = 'poll') => {
   const trackingInfo = await getOrderTracking(hwOrderId);
 
   // Update your order with tracking info
@@ -669,37 +886,49 @@ const syncTrackingToOrder = async (telRxsOrderId, hwOrderId) => {
     throw new Error(`Order ${telRxsOrderId} not found`);
   }
 
-  // Update order status based on HW status
-  const statusMapping = {
-    'processing': 'confirmed',
-    'dispensed': 'processing',
-    'complete': 'shipped',
-    'canceled': 'cancelled'
-  };
-
-  order.hw_status = trackingInfo.order_status;
-  order.status = statusMapping[trackingInfo.order_status] || order.status;
+  applyOrderStatusFields(order, trackingInfo.order_status, trackingInfo.order_status_description);
 
   // Store tracking information
   if (trackingInfo.shipments.length > 0) {
-    // order.tracking_info = trackingInfo.shipments.map(s => ({
-    //   tracking_number: s.tracking_number,
-    //   carrier: s.carrier_title,
-    //   carrier_code: s.carrier_code,
-    //   status: s.status,
-    //   items_shipped: s.items_shipped,
-    //   last_checked: new Date()
-    // }));
-
-    // Set primary tracking number for easy access
-    order.trackingNumber = trackingInfo.shipments[0]?.tracking_number;
-    // order.carrier = trackingInfo.shipments[0]?.carrier_title;
+    order.shipments = trackingInfo.shipments.map(normalizeShipment);
+    order.trackingNumber = trackingInfo.shipments[0]?.tracking_number || order.trackingNumber;
   }
 
   order.last_tracking_sync = new Date();
   await order.save();
 
-  return trackingInfo;
+  await recordHealthWarehouseEvent({
+    order,
+    hwOrderId,
+    eventType: 'order',
+    source,
+    hwStatus: trackingInfo.order_status,
+    localStatus: order.status,
+    message: trackingInfo.order_status_description,
+    rawPayload: trackingInfo
+  });
+
+  await Promise.all(
+    trackingInfo.shipments.map((shipment) => recordHealthWarehouseEvent({
+      order,
+      hwOrderId,
+      eventType: 'shipment',
+      source,
+      hwStatus: shipment.status || trackingInfo.order_status,
+      localStatus: order.status,
+      shipment,
+      rawPayload: shipment
+    }))
+  );
+
+  return {
+    ...trackingInfo,
+    local_status: order.status,
+    hw_status: trackingInfo.order_status,
+    last_tracking_sync: order.last_tracking_sync,
+    tracking_number: order.trackingNumber || trackingInfo.tracking_number,
+    shipments: (order.shipments || []).map((shipment) => shipment.toObject?.() || shipment)
+  };
 };
 
 // Cancel Order
@@ -737,6 +966,11 @@ module.exports = {
   mapShippingMethod,
   createOrderWithNewPrescription,
   getOrderTracking,
+  syncTrackingToOrder,
+  applyOrderStatusUpdate,
+  applyShipmentUpdate,
+  recordHealthWarehouseEvent,
+  mapHWStatusToLocalStatus,
   cancelOrder,
-  syncTrackingToOrder
+  normalizeShipment
 };

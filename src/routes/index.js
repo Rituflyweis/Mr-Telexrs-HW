@@ -19,6 +19,11 @@ router.use('/health', require('../modules/health/health.routes'));
 router.use('/newsletter', require('../modules/newsletter/newsletter.routes'));
 
 /* =======================
+   HEALTHWAREHOUSE WEBHOOKS
+======================= */
+router.use('/webhooks/healthwarehouse', require('../modules/healthwarehouse/healthwarehouse.webhook.routes'));
+
+/* =======================
    FOOTER MANAGEMENT ROUTES (Must come before /admin to avoid route conflicts)
    Public: GET routes (view published sections)
    Admin/Sub-Admin: POST, PUT, DELETE routes (full CRUD)
@@ -59,6 +64,11 @@ router.use('/admin', require('../modules/medicine/medicine.routes'));
    Protected: All other routes require admin authentication
 ======================= */
 router.use('/admin/help', require('../modules/help-desk/help-desk.routes'));
+
+/* =======================
+   HEALTHWAREHOUSE ADMIN TEST HELPERS
+======================= */
+router.use('/admin/healthwarehouse', require('../modules/healthwarehouse/healthwarehouse.admin.routes'));
 
 /* =======================
    DOCTOR'S NOTE TEMPLATE ROUTES (Public GET, Admin/Sub-Admin for POST/PUT/DELETE)

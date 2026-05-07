@@ -52,7 +52,7 @@ router.delete('/orders/:orderId/items/:itemId/save', auth, unsaveOrderItemValida
 router.get('/orders/:id/status', orderIdValidation, validate, controller.getOrderStatus);
 
 // Get order tracking
-router.get('/orders/:id/tracking', orderIdValidation, validate, controller.getOrderTracking);
+router.get('/orders/:id/tracking', auth, orderIdValidation, validate, controller.getOrderTracking);
 
 // Get order invoice
 router.get('/orders/:id/invoice', orderIdValidation, validate, controller.getOrderInvoice);
@@ -67,4 +67,3 @@ router.post('/orders/:id/reorder', auth, reorderValidation, validate, controller
 router.put('/orders/:id/notes', auth, updateOrderNotesValidation, validate, controller.updateOrderNotes);
 
 module.exports = router;
-

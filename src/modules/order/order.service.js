@@ -6,6 +6,7 @@
 const User = require('../../models/User.model')
 const Doctor = require('../../models/Doctor.model')
 const Order = require('../../models/Order.model');
+const HealthWarehouseEvent = require('../../models/HealthWarehouseEvent.model');
 const Prescription = require('../../models/Prescription.model');
 const Address = require('../../models/Address.model');
 const Medicine = require('../../models/Medicine.model');
@@ -177,7 +178,7 @@ exports.getOrderById = async (userId, userRole, orderId) => {
   }
 
   // Get tracking from HealthWarehouse
-  const trackingInfo = await HWHelper.getOrderTracking(order.hw_order_id);
+  const trackingInfo = await HWHelper.syncTrackingToOrder(order._id, order.hw_order_id, 'poll');
 
   trackingInfo.items = order.items;
   trackingInfo.subtotal = order.subtotal;
@@ -367,17 +368,28 @@ exports.getOrderTracking = async (userId, orderId) => {
     };
   }
 
-  const trackingInfo = await HWHelper.getOrderTracking(order.hw_order_id);
+  const trackingInfo = await HWHelper.syncTrackingToOrder(order._id, order.hw_order_id, 'poll');
+  const events = await HealthWarehouseEvent.find({
+    $or: [
+      { order: order._id },
+      { hw_order_id: order.hw_order_id }
+    ]
+  })
+    .sort({ createdAt: -1 })
+    .limit(20)
+    .lean();
 
   return {
     orderNumber: order.orderNumber,
-    status: trackingInfo.order_status,
+    status: trackingInfo.local_status || order.status,
+    hw_status: trackingInfo.hw_status || trackingInfo.order_status,
     paymentStatus: order.paymentStatus,
     trackingNumber: trackingInfo.tracking_number || null,
     estimatedDelivery: order.estimatedDelivery || null,
     deliveredAt: order.deliveredAt || null,
     shippingAddress: order.shippingAddress,
     ...trackingInfo,
+    events,
     createdAt: order.createdAt,
     updatedAt: order.updatedAt
   };
@@ -1380,7 +1392,10 @@ exports.createOrderByDoctor = async (doctorId, orderId) => {
 
   // Update order with HW IDs
   order.hw_order_id = hwResult.hw_order_id;
-  order.status = hwResult.hw_status;
+  order.hw_status = hwResult.hw_status;
+  order.hw_status_updated_at = new Date();
+  order.hw_status_message = 'Order has been received by HealthWarehouse.';
+  order.status = HWHelper.mapHWStatusToLocalStatus(hwResult.hw_status, order.status);
   //order.status = 'sent_to_pharmacy';
 
   if (hwResult.hw_split_order_id) {
@@ -1388,6 +1403,16 @@ exports.createOrderByDoctor = async (doctorId, orderId) => {
   }
 
   await order.save();
+  await HWHelper.recordHealthWarehouseEvent({
+    order,
+    hwOrderId: hwResult.hw_order_id,
+    eventType: 'order',
+    source: 'poll',
+    hwStatus: hwResult.hw_status,
+    localStatus: order.status,
+    message: order.hw_status_message,
+    rawPayload: hwResult
+  });
 
   return {
     success: true,
@@ -1540,7 +1565,10 @@ exports.createPrescriptionOrderByDoctor = async (doctorId, data) => {
 
   // Update order with HW IDs and prescription reference
   order.hw_order_id = hwResult.hw_order_id;
-  order.status = 'confirmed';
+  order.hw_status = hwResult.hw_status;
+  order.hw_status_updated_at = new Date();
+  order.hw_status_message = 'Order has been received by HealthWarehouse.';
+  order.status = HWHelper.mapHWStatusToLocalStatus(hwResult.hw_status, 'confirmed');
   order.prescription_sent_at = new Date();
   order.doctorApproved = true;
   order.prescription = prescription._id;
@@ -1550,6 +1578,17 @@ exports.createPrescriptionOrderByDoctor = async (doctorId, data) => {
   }
 
   await order.save();
+  await HWHelper.recordHealthWarehouseEvent({
+    order,
+    hwOrderId: hwResult.hw_order_id,
+    eventType: 'order',
+    source: 'poll',
+    hwStatus: hwResult.hw_status,
+    localStatus: order.status,
+    message: order.hw_status_message,
+    rawPayload: hwResult
+  });
+
   const updatedForm = await IntakeFormModel.findOneAndUpdate(
     { patient: patient._id, doctor: doctorId },
     { $set: { status: 'reviewed' } },
@@ -1563,6 +1602,8 @@ exports.createPrescriptionOrderByDoctor = async (doctorId, data) => {
     order: order,
     hw_order_id: hwResult.hw_order_id,
     hw_status: hwResult.hw_status,
+    tracking_available: false,
+    next_status_message: 'Shipment details will appear after HealthWarehouse dispenses or ships the order.',
     is_prescription_order: true
   };
 };
@@ -1640,7 +1681,9 @@ exports.getPatientOrders = async (userId, queryParams = {}) => {
         order_number: order.orderNumber,
         order_date: order.createdAt,
         // order status - pending, confirmed, processing, dispensed, complete, canceled
-        status: trackingInfo?.order_status || order.status,
+        status: trackingInfo?.order_status
+          ? HWHelper.mapHWStatusToLocalStatus(trackingInfo.order_status, order.status)
+          : order.status,
         // status_details: statusDetails,
         items_count: order.items?.length || 0,
         items: order.items?.slice(0, 3).map(item => ({
