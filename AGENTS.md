@@ -1,17 +1,15 @@
 <claude-mem-context>
 # Memory Context
 
-# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-05-07 3:28pm GMT+5:30
+# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-05-07 3:52pm GMT+5:30
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (19,410t read) | 625,009t work | 97% savings
+Stats: 50 obs (19,503t read) | 623,630t work | 97% savings
 
 ### Apr 30, 2026
-196 9:06p 🔵 Patient List Retrieved — Dipesh Joshi Patient Profile Found with HealthWarehouse IDs
-197 " 🔴 admin-patient-transaction.service.js Selects Non-Existent Field "orderStatus" — Should Be "status"
 198 9:07p 🔵 Production Database Has 41 Total Patients — Small Deployment
 199 " 🔵 Admin Patient Transactions API Returns Different Response Shape Than Expected
 200 " 🔵 Real Dr Excuse Order Found with Successful Payment — order.status Not Visible Due to Wrong Field Select
@@ -73,6 +71,8 @@ S68 Healthware API Order Tracking Flow — Full investigation of how orders are 
 612 " 🟣 Added "HealthWarehouse Order Journey Testing" Folder to Postman Collection
 613 " 🟣 Created HW_ORDER_JOURNEY_TESTING.md — Order Status Testing Guide
 614 3:21p 🔵 Broader HW Integration Branch Scope Revealed by Git Status
+615 3:28p 🔵 Order API Response Missing Top-Level mongo_order_id Field
+616 " 🔵 MongoDB Order _id Retrieved for HW Order 61491
 
-Access 625k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 624k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>

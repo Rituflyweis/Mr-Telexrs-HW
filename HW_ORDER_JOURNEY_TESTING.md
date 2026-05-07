@@ -14,6 +14,24 @@ Content-Type: application/json
 
 This endpoint works only in test/dev mode. Production tracking still comes from HealthWarehouse webhooks.
 
+If you get this error:
+
+```json
+{
+  "message": "HealthWarehouse test order updates are only available in test mode"
+}
+```
+
+check the server environment. The endpoint is enabled when either:
+
+```txt
+NODE_ENV is not production
+HW_API_URL points to https://partners-test.healthwarehouse.com/v1
+HW_TEST_JOURNEY_ENABLED=true
+```
+
+For a staging deployment that uses `NODE_ENV=production`, set `HW_API_URL` to the HealthWarehouse test URL or set `HW_TEST_JOURNEY_ENABLED=true`, then redeploy.
+
 ## Postman Setup
 
 Open `TeleRxs HW APIs.postman_collection.json` and use the folder:

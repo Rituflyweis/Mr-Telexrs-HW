@@ -195,7 +195,7 @@ const getDailyOrdersReport = async (startDate, endDate) => {
 // ============ TEST ENVIRONMENT HELPERS ============
 
 const simulateOrderStatus = async (orderId, status) => {
-    if (!config.isTest) {
+    if (!config.allowTestJourneyUpdates) {
         throw new Error('Status simulation only available in test environment');
     }
     const response = await client.post(`/orders/${orderId}/status`, { status });

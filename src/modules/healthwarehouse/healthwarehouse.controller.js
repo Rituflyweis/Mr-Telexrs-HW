@@ -130,7 +130,7 @@ exports.handleShipmentWebhook = async (req, res, next) => {
 
 exports.simulateOrderStatus = async (req, res, next) => {
   try {
-    if (!config.isTest) {
+    if (!config.allowTestJourneyUpdates) {
       throw new AppError('HealthWarehouse status simulation is only available in test mode', 403);
     }
 
@@ -159,7 +159,7 @@ exports.simulateOrderStatus = async (req, res, next) => {
 
 exports.updateTestOrderJourney = async (req, res, next) => {
   try {
-    if (!config.isTest) {
+    if (!config.allowTestJourneyUpdates) {
       throw new AppError('HealthWarehouse test order updates are only available in test mode', 403);
     }
 
