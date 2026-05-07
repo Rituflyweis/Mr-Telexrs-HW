@@ -67,6 +67,219 @@ const getOrderMedicalSnapshot = (data = {}, items = []) => {
   };
 };
 
+const asDate = (value) => value ? new Date(value) : null;
+
+const findEvent = (events = [], predicate) => {
+  return events.find(predicate) || null;
+};
+
+const eventDate = (event) => asDate(event?.processed_at || event?.received_at || event?.createdAt);
+
+const hasStatusEvent = (events = [], statuses = []) => {
+  return events.some((event) => statuses.includes(event.hw_status));
+};
+
+const buildDeliveryTimeline = (order = {}, events = []) => {
+  const sortedEvents = [...events].sort((a, b) => {
+    return new Date(a.createdAt || a.received_at || 0) - new Date(b.createdAt || b.received_at || 0);
+  });
+  const rawHwStatus = order.hw_status || '';
+  const localStatus = order.status || '';
+  const hasHwOrder = Boolean(order.hw_order_id);
+  const sentEvent = findEvent(sortedEvents, event => event.event_type === 'order' && event.hw_order_id);
+  const processingEvent = findEvent(sortedEvents, event => ['processing', 'transfer_success'].includes(event.hw_status));
+  const failureEvent = findEvent(sortedEvents, event => event.hw_status === 'transfer_failure');
+  const dispensedEvent = findEvent(sortedEvents, event => event.hw_status === 'dispensed');
+  const shippedEvent = findEvent(sortedEvents, event => {
+    return event.hw_status === 'complete' || event.event_type === 'shipment' || Boolean(event.tracking_number);
+  });
+  const cancelledEvent = findEvent(sortedEvents, event => ['canceled', 'cancelled'].includes(event.hw_status));
+  const refundedEvent = findEvent(sortedEvents, event => event.local_status === 'refunded' || event.hw_status === 'refunded');
+
+  const isCancelled = localStatus === 'cancelled' || ['canceled', 'cancelled'].includes(rawHwStatus);
+  const isRefunded = localStatus === 'refunded';
+  const isFailed = rawHwStatus === 'transfer_failure' || localStatus === 'processing';
+  const isDispensed = localStatus === 'dispensed' || rawHwStatus === 'dispensed' || hasStatusEvent(sortedEvents, ['dispensed', 'complete']);
+  const isShipped = ['shipped', 'delivered'].includes(localStatus) || rawHwStatus === 'complete' || Boolean(order.trackingNumber);
+  const isDelivered = localStatus === 'delivered' || Boolean(order.deliveredAt);
+  const processingStepStatus = !hasHwOrder
+    ? 'pending'
+    : (isFailed || isCancelled || isRefunded || isDispensed || isShipped || isDelivered ? 'completed' : 'current');
+  const dispensedStepStatus = isDispensed
+    ? (isShipped || isDelivered ? 'completed' : 'current')
+    : 'pending';
+  const shippedStepStatus = isShipped
+    ? (isDelivered ? 'completed' : 'current')
+    : 'pending';
+
+  const steps = [
+    {
+      key: 'order_placed',
+      label: 'Order placed',
+      status: 'completed',
+      completed: true,
+      timestamp: asDate(order.createdAt),
+      message: 'Order was created in TeleRxs.'
+    },
+    {
+      key: 'sent_to_pharmacy',
+      label: 'Sent to pharmacy',
+      status: hasHwOrder ? 'completed' : 'pending',
+      completed: hasHwOrder,
+      timestamp: asDate(order.prescription_sent_at || order.hw_status_updated_at) || eventDate(sentEvent),
+      message: hasHwOrder
+        ? 'Prescription order was sent to HealthWarehouse.'
+        : 'Waiting for doctor to send the order to HealthWarehouse.'
+    },
+    {
+      key: 'pharmacy_processing',
+      label: 'Pharmacy processing',
+      status: processingStepStatus,
+      completed: processingStepStatus === 'completed',
+      timestamp: eventDate(processingEvent) || asDate(order.hw_status_updated_at),
+      message: order.hw_status_message || 'HealthWarehouse is reviewing the order.'
+    },
+    {
+      key: 'dispensed',
+      label: 'Dispensed',
+      status: dispensedStepStatus,
+      completed: isDispensed,
+      timestamp: eventDate(dispensedEvent),
+      message: isDispensed
+        ? 'Medication was dispensed by the pharmacy.'
+        : 'Medication has not been dispensed yet.'
+    },
+    {
+      key: 'shipped',
+      label: 'Shipped',
+      status: shippedStepStatus,
+      completed: isShipped,
+      timestamp: eventDate(shippedEvent) || asDate(order.last_tracking_sync),
+      message: isShipped
+        ? 'Shipment information is available.'
+        : 'Shipment tracking is not available yet.',
+      tracking_number: order.trackingNumber || shippedEvent?.tracking_number || null
+    },
+    {
+      key: 'delivered',
+      label: 'Delivered',
+      status: isDelivered ? 'completed' : 'pending',
+      completed: isDelivered,
+      timestamp: asDate(order.deliveredAt),
+      message: isDelivered
+        ? 'Order has been delivered.'
+        : 'Order has not been delivered yet.'
+    }
+  ];
+
+  if (isFailed) {
+    steps.push({
+      key: 'transfer_failure',
+      label: 'Transfer failed',
+      status: 'current',
+      completed: false,
+      timestamp: eventDate(failureEvent) || asDate(order.hw_status_updated_at),
+      message: order.hw_status_message || failureEvent?.message || 'Prescription transfer failed. Please contact support.'
+    });
+  }
+
+  if (isCancelled) {
+    steps.push({
+      key: 'cancelled',
+      label: 'Cancelled',
+      status: 'completed',
+      completed: true,
+      timestamp: eventDate(cancelledEvent) || asDate(order.hw_status_updated_at || order.updatedAt),
+      message: order.hw_status_message || cancelledEvent?.message || 'Order was cancelled.'
+    });
+  }
+
+  if (isRefunded) {
+    steps.push({
+      key: 'refunded',
+      label: 'Refunded',
+      status: 'completed',
+      completed: true,
+      timestamp: eventDate(refundedEvent) || asDate(order.updatedAt),
+      message: order.hw_status_message || refundedEvent?.message || 'Order payment was refunded.'
+    });
+  }
+
+  return steps;
+};
+
+const normalizeTrackingEvents = (events = []) => {
+  return events.map(event => ({
+    id: event._id,
+    event_type: event.event_type,
+    source: event.source,
+    hw_status: event.hw_status,
+    local_status: event.local_status,
+    message: event.message,
+    shipment_id: event.shipment_id,
+    tracking_number: event.tracking_number,
+    carrier_code: event.carrier_code,
+    carrier_title: event.carrier_title,
+    items_shipped: event.items_shipped,
+    received_at: event.received_at,
+    processed_at: event.processed_at,
+    createdAt: event.createdAt
+  }));
+};
+
+const getOrderTrackingEvents = async (orders = [], limitPerOrder = 20) => {
+  const orderIds = orders
+    .map(order => order?._id)
+    .filter(Boolean);
+  const hwOrderIds = orders
+    .map(order => order?.hw_order_id)
+    .filter(Boolean);
+
+  if (!orderIds.length && !hwOrderIds.length) return {};
+
+  const events = await HealthWarehouseEvent.find({
+    $or: [
+      ...(orderIds.length ? [{ order: { $in: orderIds } }] : []),
+      ...(hwOrderIds.length ? [{ hw_order_id: { $in: hwOrderIds } }] : [])
+    ]
+  })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  return events.reduce((map, event) => {
+    const matchingOrder = orders.find(order => {
+      return (
+        String(order._id) === String(event.order) ||
+        (order.hw_order_id && Number(order.hw_order_id) === Number(event.hw_order_id))
+      );
+    });
+
+    if (!matchingOrder) return map;
+
+    const key = String(matchingOrder._id);
+    map[key] = map[key] || [];
+    if (map[key].length < limitPerOrder) {
+      map[key].push(event);
+    }
+    return map;
+  }, {});
+};
+
+const attachDeliveryTimelines = async (orders = [], limitPerOrder = 20) => {
+  const eventsByOrder = await getOrderTrackingEvents(orders, limitPerOrder);
+
+  return orders.map(order => {
+    const orderEvents = eventsByOrder[String(order._id)] || [];
+    const trackingEvents = normalizeTrackingEvents(orderEvents);
+
+    return {
+      ...order,
+      deliveryTimeline: buildDeliveryTimeline(order, orderEvents),
+      tracking_events: trackingEvents
+    };
+  });
+};
+
 /**
  * Finalize order after payment success:
  * - record coupon usage (idempotent)
@@ -147,9 +360,10 @@ exports.getOrders = async (userId, query = {}) => {
 
   // Batch populate medicines
   const ordersWithProducts = await batchPopulateMedicines(orders);
+  const ordersWithTimeline = await attachDeliveryTimelines(ordersWithProducts, 5);
 
   return {
-    orders: ordersWithProducts,
+    orders: ordersWithTimeline,
     pagination: buildPaginationResponse(total, page, limit)
   };
 };
@@ -173,12 +387,26 @@ exports.getOrderById = async (userId, userRole, orderId) => {
   if (!order.hw_order_id) {
     return {
       error: 'Order not yet sent to pharmacy',
-      tracking_available: false
+      tracking_available: false,
+      deliveryTimeline: buildDeliveryTimeline(order, []),
+      tracking_events: [],
+      events: []
     };
   }
 
   // Get tracking from HealthWarehouse
   const trackingInfo = await HWHelper.syncTrackingToOrder(order._id, order.hw_order_id, 'poll');
+  const eventsByOrder = await getOrderTrackingEvents([order], 20);
+  const events = eventsByOrder[String(order._id)] || [];
+  const trackingEvents = normalizeTrackingEvents(events);
+  const timelineOrder = {
+    ...order,
+    status: trackingInfo.local_status || order.status,
+    hw_status: trackingInfo.hw_status || trackingInfo.order_status || order.hw_status,
+    trackingNumber: trackingInfo.tracking_number || order.trackingNumber,
+    shipments: trackingInfo.shipments || order.shipments,
+    last_tracking_sync: trackingInfo.last_tracking_sync || order.last_tracking_sync
+  };
 
   trackingInfo.items = order.items;
   trackingInfo.subtotal = order.subtotal;
@@ -187,6 +415,9 @@ exports.getOrderById = async (userId, userRole, orderId) => {
   trackingInfo.paymentStatus = order.paymentStatus;
   trackingInfo.shippingAddress = order.shippingAddress;
   trackingInfo.orderNumber = order.orderNumber;
+  trackingInfo.deliveryTimeline = buildDeliveryTimeline(timelineOrder, events);
+  trackingInfo.tracking_events = trackingEvents;
+  trackingInfo.events = events;
 
   // Use batch helper for single order
   // const [enrichedOrder] = await batchPopulateMedicines([order]);
@@ -352,7 +583,7 @@ exports.getOrderTracking = async (userId, orderId) => {
     _id: orderId,
     patient: patient._id
   })
-    .select('orderNumber status paymentStatus hw_order_id trackingNumber estimatedDelivery deliveredAt createdAt updatedAt')
+    .select('orderNumber status paymentStatus hw_order_id hw_status hw_status_message hw_status_updated_at last_tracking_sync shipments trackingNumber estimatedDelivery deliveredAt prescription_sent_at createdAt updatedAt')
     .populate({
       path: 'shippingAddress',
       select: 'fullName addressLine1 addressLine2 city state postalCode country phoneNumber'
@@ -364,7 +595,10 @@ exports.getOrderTracking = async (userId, orderId) => {
   if (!order.hw_order_id) {
     return {
       error: 'Order not yet sent to pharmacy',
-      tracking_available: false
+      tracking_available: false,
+      deliveryTimeline: buildDeliveryTimeline(order, []),
+      tracking_events: [],
+      events: []
     };
   }
 
@@ -378,6 +612,15 @@ exports.getOrderTracking = async (userId, orderId) => {
     .sort({ createdAt: -1 })
     .limit(20)
     .lean();
+  const trackingEvents = normalizeTrackingEvents(events);
+  const timelineOrder = {
+    ...order,
+    status: trackingInfo.local_status || order.status,
+    hw_status: trackingInfo.hw_status || trackingInfo.order_status || order.hw_status,
+    trackingNumber: trackingInfo.tracking_number || order.trackingNumber,
+    shipments: trackingInfo.shipments || order.shipments,
+    last_tracking_sync: trackingInfo.last_tracking_sync || order.last_tracking_sync
+  };
 
   return {
     orderNumber: order.orderNumber,
@@ -389,6 +632,8 @@ exports.getOrderTracking = async (userId, orderId) => {
     deliveredAt: order.deliveredAt || null,
     shippingAddress: order.shippingAddress,
     ...trackingInfo,
+    deliveryTimeline: buildDeliveryTimeline(timelineOrder, events),
+    tracking_events: trackingEvents,
     events,
     createdAt: order.createdAt,
     updatedAt: order.updatedAt
@@ -1277,11 +1522,12 @@ exports.getOrdersForDoctor = async (doctorId, query = {}) => {
       }
     };
   });
+  const ordersWithTimeline = await attachDeliveryTimelines(ordersWithAllergies, 5);
 
   console.log(statusCountsMap)
 
   return {
-    orders: ordersWithAllergies,
+    orders: ordersWithTimeline,
     totalCount: total,
     statusCounts: statusCountsMap,
     pagination: buildPaginationResponse(total, page, limit)
@@ -1419,7 +1665,8 @@ exports.createOrderByDoctor = async (doctorId, orderId) => {
     order: order,
     hw_order_id: hwResult.hw_order_id,
     hw_status: hwResult.hw_status,
-    split_order_id: hwResult.hw_split_order_id || null
+    split_order_id: hwResult.hw_split_order_id || null,
+    deliveryTimeline: buildDeliveryTimeline(order, [])
   };
 };
 
@@ -1604,7 +1851,8 @@ exports.createPrescriptionOrderByDoctor = async (doctorId, data) => {
     hw_status: hwResult.hw_status,
     tracking_available: false,
     next_status_message: 'Shipment details will appear after HealthWarehouse dispenses or ships the order.',
-    is_prescription_order: true
+    is_prescription_order: true,
+    deliveryTimeline: buildDeliveryTimeline(order, [])
   };
 };
 
@@ -1655,6 +1903,7 @@ exports.getPatientOrders = async (userId, queryParams = {}) => {
       .lean(),
     Order.countDocuments(filter)
   ]);
+  const eventsByOrder = await getOrderTrackingEvents(orders, 5);
 
   // Enhance each order with status details and tracking info
   const enhancedOrders = await Promise.all(
@@ -1672,6 +1921,18 @@ exports.getPatientOrders = async (userId, queryParams = {}) => {
           trackingInfo = { has_tracking: false, error: 'Unable to fetch tracking' };
         }
       }
+      const finalStatus = trackingInfo?.order_status
+        ? HWHelper.mapHWStatusToLocalStatus(trackingInfo.order_status, order.status)
+        : order.status;
+      const orderEvents = eventsByOrder[String(order._id)] || [];
+      const trackingEvents = normalizeTrackingEvents(orderEvents);
+      const timelineOrder = {
+        ...order,
+        status: finalStatus,
+        hw_status: trackingInfo?.order_status || order.hw_status,
+        trackingNumber: trackingInfo?.shipments?.[0]?.tracking_number || order.trackingNumber,
+        shipments: trackingInfo?.shipments || order.shipments
+      };
 
       // Calculate delivery estimate
       // const deliveryEstimate = DeliveryHelper.getOrderDeliveryEstimate(order);
@@ -1681,9 +1942,7 @@ exports.getPatientOrders = async (userId, queryParams = {}) => {
         order_number: order.orderNumber,
         order_date: order.createdAt,
         // order status - pending, confirmed, processing, dispensed, complete, canceled
-        status: trackingInfo?.order_status
-          ? HWHelper.mapHWStatusToLocalStatus(trackingInfo.order_status, order.status)
-          : order.status,
+        status: finalStatus,
         // status_details: statusDetails,
         items_count: order.items?.length || 0,
         items: order.items?.slice(0, 3).map(item => ({
@@ -1711,7 +1970,9 @@ exports.getPatientOrders = async (userId, queryParams = {}) => {
         //   status: trackingInfo.order_status,
         //   status_description: trackingInfo.order_status_description
         // } : null,
-        trackingNumber: trackingInfo?.shipments?.[0]?.tracking_number,
+        trackingNumber: trackingInfo?.shipments?.[0]?.tracking_number || order.trackingNumber || null,
+        deliveryTimeline: buildDeliveryTimeline(timelineOrder, orderEvents),
+        tracking_events: trackingEvents,
         // delivery_estimate: deliveryEstimate,
         created_at: order.createdAt,
         updated_at: order.updatedAt

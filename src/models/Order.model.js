@@ -218,6 +218,10 @@ const orderSchema = new mongoose.Schema(
       default: false
     },
 
+    prescription_sent_at: {
+      type: Date
+    },
+
     totalAmount: {
       type: Number,
       required: true,
@@ -235,6 +239,7 @@ const orderSchema = new mongoose.Schema(
         'shipped',
         'delivered',
         'cancelled',
+        'refunded',
         'returned'
       ],
       default: 'pending'

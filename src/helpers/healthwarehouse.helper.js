@@ -306,6 +306,13 @@ const mapShippingMethod = (method) => {
 const normalizeHWStatus = (status) => String(status || '').trim().toLowerCase();
 
 const mapHWStatusToLocalStatus = (status, fallbackStatus) => {
+  const terminalLocalStatuses = ['delivered', 'refunded', 'returned', 'cancelled'];
+  const normalizedStatus = normalizeHWStatus(status);
+
+  if (terminalLocalStatuses.includes(fallbackStatus) && normalizedStatus !== 'canceled') {
+    return fallbackStatus;
+  }
+
   const mapping = {
     processing: 'confirmed',
     transfer_success: 'confirmed',
@@ -315,7 +322,7 @@ const mapHWStatusToLocalStatus = (status, fallbackStatus) => {
     canceled: 'cancelled'
   };
 
-  return mapping[normalizeHWStatus(status)] || fallbackStatus;
+  return mapping[normalizedStatus] || fallbackStatus;
 };
 
 const buildEventIdempotencyKey = ({

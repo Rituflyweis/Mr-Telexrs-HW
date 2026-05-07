@@ -152,7 +152,11 @@ trackingNumber      Primary tracking number
 shipments           Shipment list
 has_tracking        true after tracking is added
 last_tracking_sync  Last backend update time
+deliveryTimeline    UI-ready timeline steps for order placed, sent to pharmacy, processing, dispensed, shipped, delivered, and terminal states
+tracking_events     Normalized raw HW event history
 events              Latest tracking/status history
 ```
+
+`deliveryTimeline` is also returned on doctor/patient order list responses and order detail responses after this backend change, so FE can show the journey without calling the tracking API separately for every list item.
 
 For `complete`, FE should show the tracking number and shipment details. For earlier statuses, FE should show that tracking is not available yet.
