@@ -43,10 +43,13 @@ HealthWarehouse Order Journey Testing
 Set these collection variables:
 
 ```txt
+base_url         https://mr-telexrs-hw.vercel.app/api/v1
 admin_token      Admin or sub-admin JWT
+patient_token    Patient JWT, only needed for patient tracking verification
 mongo_order_id   Mongo _id of the order to test
 tracking_number  Test tracking number, for example TESTTRACK123456
 shipment_id      Test shipment ID, for example TEST-SHIP-001
+order_status     Status filter for list verification, for example delivered
 ```
 
 ## Status Test Requests
@@ -121,6 +124,24 @@ Use this to test the shipped state and populate tracking data.
 
 Expected local order status: `shipped`
 
+### Delivered With Tracking
+
+Use this to test the delivered dashboard card and delivered timeline state.
+
+```json
+{
+  "status": "delivered",
+  "tracking_number": "TESTTRACK123456",
+  "shipment_id": "TEST-SHIP-001",
+  "carrier_code": "usps",
+  "carrier_title": "United States Postal Service",
+  "items_shipped": 1,
+  "message": "Test: order delivered."
+}
+```
+
+Expected local order status: `delivered`
+
 ### Canceled
 
 Use this to test cancellation UI.
@@ -133,6 +154,19 @@ Use this to test cancellation UI.
 ```
 
 Expected local order status: `cancelled`
+
+### Refunded
+
+Use this to test the refunded dashboard card.
+
+```json
+{
+  "status": "refunded",
+  "message": "Test: order refunded."
+}
+```
+
+Expected local order status: `refunded`
 
 ## Frontend Verification
 
@@ -160,3 +194,5 @@ events              Latest tracking/status history
 `deliveryTimeline` is also returned on doctor/patient order list responses and order detail responses after this backend change, so FE can show the journey without calling the tracking API separately for every list item.
 
 For `complete`, FE should show the tracking number and shipment details. For earlier statuses, FE should show that tracking is not available yet.
+
+For the frontend handoff, share `FE_HEALTHWAREHOUSE_ORDER_FLOW.md`. It has the exact FE APIs, status mapping, timeline shape, and Postman flow.

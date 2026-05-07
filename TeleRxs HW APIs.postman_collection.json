@@ -1057,7 +1057,7 @@
                 "journey"
               ]
             },
-            "description": "Test/dev only. Updates the local HealthWarehouse journey for a Mongo order ID so frontend can verify status and tracking UI."
+            "description": "Test/dev only. Updates a Mongo order that was already sent to HealthWarehouse. Use this to verify frontend order status, tracking, and delivery timeline UI."
           },
           "response": []
         },
@@ -1103,7 +1103,7 @@
                 "journey"
               ]
             },
-            "description": "Test/dev only. Updates the local HealthWarehouse journey for a Mongo order ID so frontend can verify status and tracking UI."
+            "description": "Test/dev only. Updates a Mongo order that was already sent to HealthWarehouse. Use this to verify frontend order status, tracking, and delivery timeline UI."
           },
           "response": []
         },
@@ -1149,7 +1149,7 @@
                 "journey"
               ]
             },
-            "description": "Test/dev only. Updates the local HealthWarehouse journey for a Mongo order ID so frontend can verify status and tracking UI."
+            "description": "Test/dev only. Updates a Mongo order that was already sent to HealthWarehouse. Use this to verify frontend order status, tracking, and delivery timeline UI."
           },
           "response": []
         },
@@ -1195,7 +1195,7 @@
                 "journey"
               ]
             },
-            "description": "Test/dev only. Updates the local HealthWarehouse journey for a Mongo order ID so frontend can verify status and tracking UI."
+            "description": "Test/dev only. Updates a Mongo order that was already sent to HealthWarehouse. Use this to verify frontend order status, tracking, and delivery timeline UI."
           },
           "response": []
         },
@@ -1241,12 +1241,58 @@
                 "journey"
               ]
             },
-            "description": "Test/dev only. Updates the local HealthWarehouse journey for a Mongo order ID so frontend can verify status and tracking UI."
+            "description": "Test/dev only. Updates a Mongo order that was already sent to HealthWarehouse. Use this to verify frontend order status, tracking, and delivery timeline UI."
           },
           "response": []
         },
         {
-          "name": "6. Set Status - Canceled",
+          "name": "6. Set Status - Delivered With Tracking",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"delivered\",\n  \"tracking_number\": \"{{tracking_number}}\",\n  \"shipment_id\": \"{{shipment_id}}\",\n  \"carrier_code\": \"usps\",\n  \"carrier_title\": \"United States Postal Service\",\n  \"items_shipped\": 1,\n  \"message\": \"Test: order delivered.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/healthwarehouse/test-orders/{{mongo_order_id}}/journey",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "healthwarehouse",
+                "test-orders",
+                "{{mongo_order_id}}",
+                "journey"
+              ]
+            },
+            "description": "Test/dev only. Updates a Mongo order that was already sent to HealthWarehouse. Use this to verify frontend order status, tracking, and delivery timeline UI. Delivered is a test-only local UI status; production delivery would come from carrier/HW shipment updates."
+          },
+          "response": []
+        },
+        {
+          "name": "7. Set Status - Canceled",
           "request": {
             "method": "POST",
             "auth": {
@@ -1287,7 +1333,145 @@
                 "journey"
               ]
             },
-            "description": "Test/dev only. Updates the local HealthWarehouse journey for a Mongo order ID so frontend can verify status and tracking UI."
+            "description": "Test/dev only. Updates a Mongo order that was already sent to HealthWarehouse. Use this to verify frontend order status, tracking, and delivery timeline UI."
+          },
+          "response": []
+        },
+        {
+          "name": "8. Set Status - Refunded",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"refunded\",\n  \"message\": \"Test: order refunded.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/healthwarehouse/test-orders/{{mongo_order_id}}/journey",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "healthwarehouse",
+                "test-orders",
+                "{{mongo_order_id}}",
+                "journey"
+              ]
+            },
+            "description": "Test/dev only. Updates a Mongo order that was already sent to HealthWarehouse. Use this to verify frontend order status, tracking, and delivery timeline UI. Refunded is a test-only local UI/payment status for frontend verification."
+          },
+          "response": []
+        },
+        {
+          "name": "9. Verify Doctor Order Detail + Timeline",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/doctor/order/orders/{{mongo_order_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "doctor",
+                "order",
+                "orders",
+                "{{mongo_order_id}}"
+              ]
+            },
+            "description": "Verifies the selected order detail as doctor/admin. Response should include deliveryTimeline, tracking_events, events, hw_status, status, trackingNumber, and shipments."
+          },
+          "response": []
+        },
+        {
+          "name": "10. Verify Patient Tracking + Timeline",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patient_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/patient/orders/{{mongo_order_id}}/tracking",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "patient",
+                "orders",
+                "{{mongo_order_id}}",
+                "tracking"
+              ]
+            },
+            "description": "Verifies the patient tracking response. Requires the patient token that owns mongo_order_id. Response should include deliveryTimeline, tracking_events, events, has_tracking, trackingNumber, and shipments."
+          },
+          "response": []
+        },
+        {
+          "name": "11. Verify Doctor Orders List By Status",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/doctor/order/getOrdersForDoctor?page=1&limit=10&status={{order_status}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "doctor",
+                "order",
+                "getOrdersForDoctor"
+              ]
+            },
+            "description": "Verifies dashboard/list rendering by status. Set order_status to pending, confirmed, processing, shipped, delivered, cancelled, or refunded."
           },
           "response": []
         }
@@ -1331,7 +1515,7 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "https://mr-telerxs-n-backend.onrender.com/api/v1"
+      "value": "https://mr-telexrs-hw.vercel.app/api/v1"
     },
     {
       "key": "patient_token",
@@ -1364,6 +1548,10 @@
     {
       "key": "shipment_id",
       "value": "TEST-SHIP-001"
+    },
+    {
+      "key": "order_status",
+      "value": "delivered"
     }
   ]
 }

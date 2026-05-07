@@ -1,13 +1,13 @@
 <claude-mem-context>
 # Memory Context
 
-# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-05-07 6:30pm GMT+5:30
+# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-05-07 6:35pm GMT+5:30
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (19,715t read) | 235,256t work | 92% savings
+Stats: 50 obs (19,823t read) | 229,051t work | 91% savings
 
 ### May 5, 2026
 S57 Explain isActive flag behavior and fix options for 409 conflict on health category PUT update (May 5 at 4:30 PM)
@@ -21,8 +21,6 @@ S65 Healthware API order tracking flow after prescription order creation — how
 S66 Simulating tracking ID, shipment ID, and address in the Healthwarehouse test environment (May 7 at 12:42 AM)
 S67 Healthware API Order Tracking Flow — How is the order tracked after doctor creates prescription order on HW side? (May 7 at 9:59 AM)
 S68 Healthware API Order Tracking Flow — Full investigation of how orders are tracked after doctor prescription creation, including status transitions, shipment data, and webhook architecture (May 7 at 10:06 AM)
-635 5:45p 🔵 getOrdersForDoctor Uses Different Status Set Than getPatientOrders
-637 " 🔵 Live API Confirms Order Status Gaps — processing, delivered, cancelled, refunded All Zero
 638 5:46p 🔵 Full Order Response Shape and Sample Order Confirmed from Live API
 639 " 🔵 20 Target Orders Identified for Status Seeding with Full Patient Context
 640 5:48p ✅ Order Model Status Enum Extended with 'refunded' Value
@@ -71,6 +69,8 @@ S68 Healthware API Order Tracking Flow — Full investigation of how orders are 
 683 " ✅ HW_ORDER_JOURNEY_TESTING.md Updated to Document deliveryTimeline and tracking_events Fields
 684 " ✅ Delivery Timeline Feature Committed to main Branch
 685 " 🔵 Final Integration Verification — All deliveryTimeline Touchpoints Confirmed in Source, Changes Still Uncommitted
+686 6:31p 🔵 No Orders in "Delivered" Status — All Sit at "Confirmed"
+687 " 🔵 Order 69f9c8d0a2148e8e8122903d Has Conflicting Delivered/Confirmed State
 
-Access 235k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 229k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>
