@@ -1,13 +1,13 @@
 <claude-mem-context>
 # Memory Context
 
-# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-05-18 5:05pm GMT+5:30
+# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-05-18 6:51pm GMT+5:30
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (19,846t read) | 229,695t work | 91% savings
+Stats: 50 obs (19,713t read) | 195,349t work | 90% savings
 
 ### May 5, 2026
 S57 Explain isActive flag behavior and fix options for 409 conflict on health category PUT update (May 5 at 4:30 PM)
@@ -21,24 +21,6 @@ S65 Healthware API order tracking flow after prescription order creation — how
 S66 Simulating tracking ID, shipment ID, and address in the Healthwarehouse test environment (May 7 at 12:42 AM)
 S67 Healthware API Order Tracking Flow — How is the order tracked after doctor creates prescription order on HW side? (May 7 at 9:59 AM)
 S68 Healthware API Order Tracking Flow — Full investigation of how orders are tracked after doctor prescription creation, including status transitions, shipment data, and webhook architecture (May 7 at 10:06 AM)
-661 6:20p 🔵 getOrderById Returns Tracking But getOrdersForDoctor Lacks Delivery Timeline
-662 " 🔵 Order Model Has Embedded Shipments Array — Delivery Timeline Not Surfaced in Doctor Listing
-663 6:21p 🔵 Delivery Timeline Tracking Block Commented Out in getPatientOrders; Absent in getOrdersForDoctor
-664 " 🟣 Delivery Timeline Builder and Batch Event Fetcher Added to order.service.js
-665 " 🟣 prescription_sent_at Field Added to Order Model
-666 6:22p 🔴 Order.model.js prescription_sent_at Patch Context Mismatch Fixed
-667 " 🟣 getOrders (Patient Order List) Wired to attachDeliveryTimelines
-668 " 🟣 getOrderById Now Returns deliveryTimeline, tracking_events, and events
-669 " 🟣 getOrderTracking Service Expanded with deliveryTimeline, tracking_events, and Full Select Fields
-670 " 🟣 getOrdersForDoctor Now Includes Delivery Timeline — All Order Endpoints Complete
-671 6:23p 🟣 getPatientOrders Enhanced Order Map Now Includes deliveryTimeline Using Pre-fetched Batch Events
-672 " 🔴 trackingNumber Fallback Chain Fixed in getPatientOrders Enhanced Order Response
-673 " 🔴 buildDeliveryTimeline Step Status Logic Corrected for Forward Progression
-674 " 🟣 createOrderByDoctor and createPrescriptionOrderByDoctor Responses Include Initial deliveryTimeline
-675 6:24p 🟣 Delivery Timeline Feature Complete — Syntax Verified, Full Diff Confirmed
-676 " 🔵 Smoke Test Failed Due to Payment Model Not Registered in Isolated Script
-677 " 🔵 Delivery Timeline Verified Against Real DB Data — All States Correct
-678 " 🔵 False "Shipped/Delivered" Timeline Caused by Test trackingNumber on Processing Order
 679 6:25p 🔵 Production Vercel API Returns 200 but Lacks deliveryTimeline — Changes Not Yet Deployed
 680 " 🔵 updateTestOrderJourney Writes trackingNumber to Order Document — Source of TESTTRACK Artifact
 681 " 🔴 mapHWStatusToLocalStatus Now Protects Terminal Local Statuses from Being Overwritten
@@ -72,6 +54,24 @@ S68 Healthware API Order Tracking Flow — Full investigation of how orders are 
 1462 4:53p 🔴 Fixed Price Field Fallback Logic in buildMedicineData and applyMedicineUpdates
 1463 " 🔴 salePrice/originalPrice Validation Removal Confirmed Applied and Syntax-Valid
 1464 " 🔴 Final State Verified: Two Files Modified, Price Validation Fully Removed
+1476 5:05p 🔵 Footer Address API Rejects "address-section" as Section Name
+1477 " 🔵 Footer API Valid Section Names Are Short Kebab-Case, Not "-section" Suffixed
+1478 5:06p 🔵 Footer Model Schema: One Document Per Section, Polymorphic Fields, Commented-Out Auth Check
+1479 " 🔴 setSectionParam Middleware Now Overrides req.body.section to Prevent Enum Validation Failure
+1502 6:23p 🔵 Footer Address API Returns Incomplete Address Data
+1503 " 🔵 Footer Helper Structure Traced in Mr-Telerxs Backend
+1504 6:24p 🔵 Footer Address Fix Path: Use updateFooterSectionBySection via PUT/PATCH
+1505 " 🔵 Footer Model Schema Has Hardcoded Default: address.country = "United States"
+1506 6:41p 🔵 Footer Helper Section Query Functions Inspected for Incomplete Response Bug
+1507 " 🔵 Footer Model Schema Contains Rich Nested Contact, Address, and Social Media Fields
+1508 6:43p 🔵 MongoDB Atlas Connection Confirmed for telerxs_db Database
+1509 6:44p 🔵 Root Cause Confirmed: Address Section Stuck in Draft Status, Missing Data in DB
+1510 6:50p 🔵 Footer Module Route Architecture in Mr-Telerxs-N-Backend
+1511 " 🔵 Footer Service Layer Uses Thin Delegation Pattern
+1512 " 🔵 Footer Helper Centralizes All Optimized MongoDB Query Logic
+1513 " 🟣 GET /footer/full Endpoint Returns All Sections as List + Section-Keyed Map
+1514 " 🔵 Live Smoke Test of getFullFooter Fails Due to Unregistered User Mongoose Model
+1515 6:51p 🔵 getFullFooter Smoke Test Passed Against Live Database — 14 Sections Returned
 
-Access 230k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 195k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>

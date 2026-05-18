@@ -48,6 +48,15 @@ router.get(
   footerController.getAllFooterSections
 );
 
+// Get full footer payload in one response (public: published only, admin: all)
+router.get(
+  '/full',
+  optionalAuthMiddleware,
+  footerValidation.getAllFooterSectionsValidation,
+  validate,
+  footerController.getFullFooter
+);
+
 // Get footer section by section name (public - only published, admin can see all)
 router.get(
   '/section/:section',

@@ -18,6 +18,22 @@ exports.getAllFooterSections = async (req, res, next) => {
   }
 };
 
+// Get full footer payload (all sections in one object)
+exports.getFullFooter = async (req, res, next) => {
+  try {
+    const isPublic = !req.user || (req.user && req.user.role !== 'admin' && req.user.role !== 'sub-admin');
+    const result = await footerService.getFullFooter(req.query, isPublic);
+
+    res.status(200).json({
+      success: true,
+      message: 'Full footer retrieved successfully',
+      data: result
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // Get footer section by section name
 exports.getFooterSectionBySection = async (req, res, next) => {
   try {
@@ -164,4 +180,3 @@ exports.saveAsDraft = async (req, res, next) => {
     next(err);
   }
 };
-

@@ -30,6 +30,25 @@ exports.getAllFooterSections = async (query = {}, isPublic = false) => {
 };
 
 /**
+ * Get full footer payload in a single response
+ * Returns both ordered list and section-keyed map for easy frontend consumption
+ */
+exports.getFullFooter = async (query = {}, isPublic = false) => {
+  const sections = await getAllSectionsOptimized(query, isPublic);
+
+  const sectionMap = sections.reduce((acc, sectionDoc) => {
+    acc[sectionDoc.section] = sectionDoc;
+    return acc;
+  }, {});
+
+  return {
+    totalSections: sections.length,
+    sections,
+    sectionMap
+  };
+};
+
+/**
  * Get footer section by section name
  * Returns null instead of throwing - allows frontend to handle gracefully
  */
