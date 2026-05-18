@@ -10,6 +10,11 @@ const validate = require('../../middlewares/validate.middleware');
 // Helper middleware to set section parameter
 const setSectionParam = (sectionName) => (req, res, next) => {
   req.params.section = sectionName;
+  // Keep section-specific routes canonical before validation/controller logic.
+  // This prevents body aliases (e.g., "address-section") from failing enum checks.
+  if (req.body && typeof req.body === 'object') {
+    req.body.section = sectionName;
+  }
   next();
 };
 
@@ -226,4 +231,3 @@ router.put(
 router.delete('/:id', footerController.deleteFooterSection);
 
 module.exports = router;
-

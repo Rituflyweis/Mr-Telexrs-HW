@@ -1,13 +1,13 @@
 <claude-mem-context>
 # Memory Context
 
-# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-05-18 4:51pm GMT+5:30
+# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-05-18 5:05pm GMT+5:30
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (19,686t read) | 213,885t work | 91% savings
+Stats: 50 obs (19,846t read) | 229,695t work | 91% savings
 
 ### May 5, 2026
 S57 Explain isActive flag behavior and fix options for 409 conflict on health category PUT update (May 5 at 4:30 PM)
@@ -21,17 +21,7 @@ S65 Healthware API order tracking flow after prescription order creation — how
 S66 Simulating tracking ID, shipment ID, and address in the Healthwarehouse test environment (May 7 at 12:42 AM)
 S67 Healthware API Order Tracking Flow — How is the order tracked after doctor creates prescription order on HW side? (May 7 at 9:59 AM)
 S68 Healthware API Order Tracking Flow — Full investigation of how orders are tracked after doctor prescription creation, including status transitions, shipment data, and webhook architecture (May 7 at 10:06 AM)
-651 6:07p ⚖️ Cancelled Sample Order Replaced: Use New Order + HW Cancel Flow
-652 " 🟣 Cancelled Dashboard Sample Seeded via HW Create-Then-Cancel Flow (HW Order 61545)
-653 6:08p 🔵 Doctor API: Orders Visible in List But getOrderById Returns 404
-654 " 🟣 Live API Confirms All Dashboard Order Status Samples Seeded and Filterable
-655 6:09p ✅ Airsupra Order Cleaned Up: HW Fields Unset, Restored to Clean Pending State
-656 " 🟣 Dashboard Order Samples Fully Verified: All 7 Status States Confirmed on Live API
-657 " 🔵 Final DB Audit: All 6 Dashboard Sample Orders Have Prescription + DoctorApproved=true
-658 6:10p 🔵 HealthWarehouseEvent Audit: All Dashboard Sample Orders Have Event History with Both Poll and Simulation Sources
-659 6:19p 🔵 Order Tracking & Delivery Timeline Architecture Mapped
-660 6:20p 🔵 Git Status Shows Order.model.js Modified Without Delivery Timeline
-661 " 🔵 getOrderById Returns Tracking But getOrdersForDoctor Lacks Delivery Timeline
+661 6:20p 🔵 getOrderById Returns Tracking But getOrdersForDoctor Lacks Delivery Timeline
 662 " 🔵 Order Model Has Embedded Shipments Array — Delivery Timeline Not Surfaced in Doctor Listing
 663 6:21p 🔵 Delivery Timeline Tracking Block Commented Out in getPatientOrders; Absent in getOrdersForDoctor
 664 " 🟣 Delivery Timeline Builder and Batch Event Fetcher Added to order.service.js
@@ -71,6 +61,17 @@ S68 Healthware API Order Tracking Flow — Full investigation of how orders are 
 698 " 🔵 Git Status Confirms All Changed Files Before Commit
 699 6:39p 🔵 Session Changeset: 367 Insertions Across 4 Files; order.service.js, helper, and Model Unchanged
 700 " 🔵 deliveryTimeline Built by buildDeliveryTimeline() in order.service.js; 'delivered' and 'refunded' Already in terminalLocalStatuses
+### May 18, 2026
+1455 4:51p 🔴 Removed salePrice and originalPrice Validation from Medicines API
+1456 " 🔵 salePrice/originalPrice Validation Located in medicine.validation.js
+1457 4:52p 🔵 Medicine Model Has salePrice required: true at Schema Level
+1458 " 🔵 Discount Calculation Is Safe When salePrice/originalPrice Are Absent
+1459 " 🔴 rating Field Also Uses requiredOnCreateOrPresentOnUpdate in addMedicineValidation
+1460 " 🔵 No Uncommitted Changes to Validation or Model Files Before Fix
+1461 " 🔴 Removed salePrice and originalPrice Validators from addMedicineValidation
+1462 4:53p 🔴 Fixed Price Field Fallback Logic in buildMedicineData and applyMedicineUpdates
+1463 " 🔴 salePrice/originalPrice Validation Removal Confirmed Applied and Syntax-Valid
+1464 " 🔴 Final State Verified: Two Files Modified, Price Validation Fully Removed
 
-Access 214k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 230k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>
