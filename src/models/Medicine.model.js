@@ -44,7 +44,7 @@ const medicineSchema = new mongoose.Schema(
     },
     originalPrice: {
       type: Number,
-      required: true,
+      required: false,
       min: 0
     },
     salePrice: {
@@ -135,6 +135,10 @@ const medicineSchema = new mongoose.Schema(
       trim: true
     },
     indications: {
+      type: String,
+      trim: true
+    },
+    ConsumerInformationAndDisclaimer: {
       type: String,
       trim: true
     },

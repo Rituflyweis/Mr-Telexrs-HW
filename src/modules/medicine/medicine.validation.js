@@ -178,9 +178,7 @@ exports.addMedicineValidation = [
     .trim(),
   
   body('originalPrice')
-    .if(requiredOnCreateOrPresentOnUpdate)
-    .notEmpty()
-    .withMessage('Original price is required')
+    .optional()
     .isFloat({ min: 0 })
     .withMessage('Original price must be a positive number'),
   
@@ -238,6 +236,12 @@ exports.addMedicineValidation = [
     .optional()
     .isArray()
     .withMessage('Dosage options must be an array'),
+
+  // Legacy alias for backward compatibility
+  body('dosageOption')
+    .optional()
+    .custom((value) => Array.isArray(parseIfString(value)))
+    .withMessage('dosageOption must be an array'),
   
   body('dosageOptions.*.name')
     .optional()
@@ -257,6 +261,12 @@ exports.addMedicineValidation = [
     .optional()
     .isArray()
     .withMessage('Quantity options must be an array'),
+
+  // Legacy alias for backward compatibility
+  body('quantityOption')
+    .optional()
+    .custom((value) => Array.isArray(parseIfString(value)))
+    .withMessage('quantityOption must be an array'),
   
   body('quantityOptions.*.name')
     .optional()
@@ -277,6 +287,13 @@ exports.addMedicineValidation = [
     .isString()
     .withMessage('Precautions must be a string (paragraph)')
     .trim(),
+
+  // Legacy singular alias for backward compatibility
+  body('precaution')
+    .optional()
+    .isString()
+    .withMessage('Precaution must be a string (paragraph)')
+    .trim(),
   
   body('sideEffects')
     .optional()
@@ -294,6 +311,19 @@ exports.addMedicineValidation = [
     .optional()
     .isString()
     .withMessage('Indications must be a string (paragraph)')
+    .trim(),
+
+  body('ConsumerInformationAndDisclaimer')
+    .optional()
+    .isString()
+    .withMessage('ConsumerInformationAndDisclaimer must be a string (paragraph)')
+    .trim(),
+
+  // Optional camelCase alias for compatibility
+  body('consumerInformationAndDisclaimer')
+    .optional()
+    .isString()
+    .withMessage('consumerInformationAndDisclaimer must be a string (paragraph)')
     .trim(),
   
   // Additional fields

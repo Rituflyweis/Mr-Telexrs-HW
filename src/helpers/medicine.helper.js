@@ -64,6 +64,29 @@ const parseBoolean = (value, defaultValue = false) => {
 };
 
 /**
+ * Pick canonical field when present, otherwise fallback to alias.
+ * @param {any} canonical
+ * @param {any} alias
+ * @returns {any}
+ */
+const pickCanonicalOrAlias = (canonical, alias) => {
+  return canonical !== undefined ? canonical : alias;
+};
+
+/**
+ * Resolve text field with alias fallback when canonical is missing/blank.
+ * Supports legacy clients that still send the singular key.
+ * @param {any} canonical
+ * @param {any} alias
+ * @returns {any}
+ */
+const resolveTextWithAlias = (canonical, alias) => {
+  if (canonical !== undefined && canonical !== null && canonical !== '') return canonical;
+  if ((canonical === undefined || canonical === null || canonical === '') && alias !== undefined) return alias;
+  return canonical;
+};
+
+/**
  * Normalize rating query input into a clean number array.
  * Supports single values, comma-separated strings, repeated query params, and JSON arrays.
  * @param {any} value
@@ -549,22 +572,35 @@ const isValidStatus = (status) => {
  * @returns {Object} Medicine data for creation/update
  */
 const buildMedicineData = (data, images, healthCategoryData = {}) => {
+  const rawDosageOptions = pickCanonicalOrAlias(data.dosageOptions, data.dosageOption);
+  const rawQuantityOptions = pickCanonicalOrAlias(data.quantityOptions, data.quantityOption);
+  const resolvedPrecautions = resolveTextWithAlias(data.precautions, data.precaution);
+  const parsedSalePrice = data.salePrice !== undefined ? parseFloat(data.salePrice) : undefined;
+  const parsedOriginalPrice = data.originalPrice !== undefined
+    ? parseFloat(data.originalPrice)
+    : parsedSalePrice;
+  const resolvedConsumerInformationAndDisclaimer = resolveTextWithAlias(
+    data.ConsumerInformationAndDisclaimer,
+    data.consumerInformationAndDisclaimer
+  );
+
   const medicineData = {
     productName: data.productName,
     brand: data.brand,
-    originalPrice: parseFloat(data.originalPrice),
-    salePrice: parseFloat(data.salePrice),
+    originalPrice: parsedOriginalPrice,
+    salePrice: parsedSalePrice,
     images: images,
     usage: normalizeUsage(parseIfString(data.usage)) || [],
     description: data.description || '',
     howItWorks: data.howItWorks || '',
     generics: parseIfString(data.generics) || [],
-    dosageOptions: parseIfString(data.dosageOptions) || [],
-    quantityOptions: parseIfString(data.quantityOptions) || [],
-    precautions: data.precautions || '',
+    dosageOptions: parseIfString(rawDosageOptions) || [],
+    quantityOptions: parseIfString(rawQuantityOptions) || [],
+    precautions: resolvedPrecautions || '',
     sideEffects: data.sideEffects || '',
     drugInteractions: data.drugInteractions || '',
     indications: data.indications || '',
+    ConsumerInformationAndDisclaimer: resolvedConsumerInformationAndDisclaimer || '',
     category: data.category || '',
     healthCategory: healthCategoryData.healthCategory || undefined,
     healthTypeSlug: healthCategoryData.healthTypeSlug || undefined,
@@ -596,15 +632,15 @@ const buildMedicineData = (data, images, healthCategoryData = {}) => {
  */
 const applyMedicineUpdates = (medicine, data, images = null, healthCategoryData = null) => {
   // Basic fields
-  if (data.productName) medicine.productName = data.productName;
-  if (data.brand) medicine.brand = data.brand;
-  if (data.originalPrice) medicine.originalPrice = parseFloat(data.originalPrice);
-  if (data.salePrice) medicine.salePrice = parseFloat(data.salePrice);
+  if (data.productName !== undefined) medicine.productName = data.productName;
+  if (data.brand !== undefined) medicine.brand = data.brand;
+  if (data.originalPrice !== undefined) medicine.originalPrice = parseFloat(data.originalPrice);
+  if (data.salePrice !== undefined) medicine.salePrice = parseFloat(data.salePrice);
   if (data.description !== undefined) medicine.description = data.description;
   if (data.howItWorks !== undefined) medicine.howItWorks = data.howItWorks;
   if (data.category !== undefined) medicine.category = data.category;
   if (data.stock !== undefined) medicine.stock = parseInt(data.stock);
-  if (data.status) medicine.status = data.status;
+  if (data.status !== undefined) medicine.status = data.status;
   if (data.visibility !== undefined) medicine.visibility = parseBoolean(data.visibility);
 
   // Images
@@ -615,17 +651,29 @@ const applyMedicineUpdates = (medicine, data, images = null, healthCategoryData 
   // Arrays
   if (data.usage !== undefined) medicine.usage = normalizeUsage(parseIfString(data.usage));
   if (data.generics !== undefined) medicine.generics = parseIfString(data.generics);
-  if (data.dosageOptions !== undefined) medicine.dosageOptions = parseIfString(data.dosageOptions);
-  if (data.quantityOptions !== undefined) medicine.quantityOptions = parseIfString(data.quantityOptions);
+  if (data.dosageOptions !== undefined || data.dosageOption !== undefined) {
+    medicine.dosageOptions = parseIfString(pickCanonicalOrAlias(data.dosageOptions, data.dosageOption));
+  }
+  if (data.quantityOptions !== undefined || data.quantityOption !== undefined) {
+    medicine.quantityOptions = parseIfString(pickCanonicalOrAlias(data.quantityOptions, data.quantityOption));
+  }
 
   // Markup
   if (data.markup !== undefined) medicine.markup = parseFloat(data.markup);
 
   // Medical information
-  if (data.precautions !== undefined) medicine.precautions = data.precautions;
+  const resolvedPrecautions = resolveTextWithAlias(data.precautions, data.precaution);
+  if (resolvedPrecautions !== undefined) medicine.precautions = resolvedPrecautions;
   if (data.sideEffects !== undefined) medicine.sideEffects = data.sideEffects;
   if (data.drugInteractions !== undefined) medicine.drugInteractions = data.drugInteractions;
   if (data.indications !== undefined) medicine.indications = data.indications;
+  const resolvedConsumerInformationAndDisclaimer = resolveTextWithAlias(
+    data.ConsumerInformationAndDisclaimer,
+    data.consumerInformationAndDisclaimer
+  );
+  if (resolvedConsumerInformationAndDisclaimer !== undefined) {
+    medicine.ConsumerInformationAndDisclaimer = resolvedConsumerInformationAndDisclaimer;
+  }
   if (data.rating !== undefined) medicine.rating = data.rating;
 
   // Health category

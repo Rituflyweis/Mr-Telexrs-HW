@@ -7,7 +7,7 @@ const mongoose = require('mongoose');
 const Medicine = require('../models/Medicine.model');
 
 // Medicine fields to select for list views
-const MEDICINE_LIST_FIELDS = 'productName brand originalPrice salePrice images description generics dosageOptions quantityOptions category stock status visibility isActive';
+const MEDICINE_LIST_FIELDS = 'productName brand originalPrice salePrice images description generics dosageOptions quantityOptions ConsumerInformationAndDisclaimer category stock status visibility isActive';
 
 // Medicine fields for detailed views
 const MEDICINE_DETAIL_FIELDS = `${MEDICINE_LIST_FIELDS} healthCategory healthTypeSlug isTrendy isBestOffer discountPercentage views`;
@@ -220,4 +220,3 @@ module.exports = {
   batchPopulateProducts,
   batchPopulateMedicinesForOrders
 };
-

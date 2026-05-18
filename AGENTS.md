@@ -1,13 +1,13 @@
 <claude-mem-context>
 # Memory Context
 
-# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-05-07 6:35pm GMT+5:30
+# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-05-18 2:22pm GMT+5:30
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (19,823t read) | 229,051t work | 91% savings
+Stats: 50 obs (19,686t read) | 213,885t work | 91% savings
 
 ### May 5, 2026
 S57 Explain isActive flag behavior and fix options for 409 conflict on health category PUT update (May 5 at 4:30 PM)
@@ -21,19 +21,6 @@ S65 Healthware API order tracking flow after prescription order creation — how
 S66 Simulating tracking ID, shipment ID, and address in the Healthwarehouse test environment (May 7 at 12:42 AM)
 S67 Healthware API Order Tracking Flow — How is the order tracked after doctor creates prescription order on HW side? (May 7 at 9:59 AM)
 S68 Healthware API Order Tracking Flow — Full investigation of how orders are tracked after doctor prescription creation, including status transitions, shipment data, and webhook architecture (May 7 at 10:06 AM)
-638 5:46p 🔵 Full Order Response Shape and Sample Order Confirmed from Live API
-639 " 🔵 20 Target Orders Identified for Status Seeding with Full Patient Context
-640 5:48p ✅ Order Model Status Enum Extended with 'refunded' Value
-641 5:49p 🟣 Orders Seeded Across All 7 Statuses for Doctor Dashboard UI Testing
-642 " 🟣 Live API Confirms All 7 Order Status Tabs Now Populated on Vercel Deployment
-643 " ✅ Uncommitted Changes Include Order Model and New HW Runbook File
-644 6:03p ⚖️ Order Flow: Send to Pharmacy Before Status Update
-645 6:04p 🔵 createPrescriptionOrderByDoctor: Full Order Flow in order.service.js
-646 " 🔵 Inline Node Scripts Must Require Patient Model Explicitly
-647 " 🔵 Target Orders DB State: Mixed Statuses, All Same Patient, HW IDs Present
-648 6:05p 🟣 Order Successfully Sent to HW Pharmacy Before Status Update (HW Order ID 61541)
-649 " 🔵 Doctor6 Profile Missing Required HW Prescriber Fields
-650 6:06p 🟣 All Four Dashboard Sample Orders Seeded via HW Pharmacy-First Flow
 651 6:07p ⚖️ Cancelled Sample Order Replaced: Use New Order + HW Cancel Flow
 652 " 🟣 Cancelled Dashboard Sample Seeded via HW Create-Then-Cancel Flow (HW Order 61545)
 653 6:08p 🔵 Doctor API: Orders Visible in List But getOrderById Returns 404
@@ -71,6 +58,19 @@ S68 Healthware API Order Tracking Flow — Full investigation of how orders are 
 685 " 🔵 Final Integration Verification — All deliveryTimeline Touchpoints Confirmed in Source, Changes Still Uncommitted
 686 6:31p 🔵 No Orders in "Delivered" Status — All Sit at "Confirmed"
 687 " 🔵 Order 69f9c8d0a2148e8e8122903d Has Conflicting Delivered/Confirmed State
+688 6:35p 🔵 Postman Collection & Frontend Flow Documentation Review
+689 " 🔵 TeleRxs Postman Collection Structure Enumerated
+690 " 🔵 HW_ORDER_JOURNEY_TESTING.md Is the Primary Frontend Handoff Document
+691 " 🔵 Frontend_changes.md Does Not Exist
+692 6:36p 🔵 Order Tracking & Detail API Endpoint URL Patterns Confirmed
+693 " 🔵 Postman Collection Variables: base_url Points to Render Deployment, Auth Tokens Empty
+694 6:37p 🟣 Added 'delivered' and 'refunded' Status Support to HW Test Journey Endpoint
+695 " 🟣 Postman Collection Updated: 11-Step HW Journey Testing Folder with Delivered, Refunded & Verification Requests
+696 6:38p 🟣 Created FE_HEALTHWAREHOUSE_ORDER_FLOW.md — Frontend Handoff Documentation
+697 " ✅ HW_ORDER_JOURNEY_TESTING.md Updated to Match New Backend Statuses and Cross-Reference FE Doc
+698 " 🔵 Git Status Confirms All Changed Files Before Commit
+699 6:39p 🔵 Session Changeset: 367 Insertions Across 4 Files; order.service.js, helper, and Model Unchanged
+700 " 🔵 deliveryTimeline Built by buildDeliveryTimeline() in order.service.js; 'delivered' and 'refunded' Already in terminalLocalStatuses
 
-Access 229k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 214k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>
