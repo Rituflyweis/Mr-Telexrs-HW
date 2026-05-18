@@ -306,6 +306,13 @@ exports.addMedicineValidation = [
     .isString()
     .withMessage('Drug interactions must be a string (paragraph)')
     .trim(),
+
+  // Legacy singular alias for backward compatibility
+  body('drugInteraction')
+    .optional()
+    .isString()
+    .withMessage('Drug interaction must be a string (paragraph)')
+    .trim(),
   
   body('indications')
     .optional()

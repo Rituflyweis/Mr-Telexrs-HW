@@ -575,6 +575,7 @@ const buildMedicineData = (data, images, healthCategoryData = {}) => {
   const rawDosageOptions = pickCanonicalOrAlias(data.dosageOptions, data.dosageOption);
   const rawQuantityOptions = pickCanonicalOrAlias(data.quantityOptions, data.quantityOption);
   const resolvedPrecautions = resolveTextWithAlias(data.precautions, data.precaution);
+  const resolvedDrugInteractions = resolveTextWithAlias(data.drugInteractions, data.drugInteraction);
   const parsedSalePrice = data.salePrice !== undefined ? parseFloat(data.salePrice) : undefined;
   const parsedOriginalPrice = data.originalPrice !== undefined
     ? parseFloat(data.originalPrice)
@@ -598,7 +599,7 @@ const buildMedicineData = (data, images, healthCategoryData = {}) => {
     quantityOptions: parseIfString(rawQuantityOptions) || [],
     precautions: resolvedPrecautions || '',
     sideEffects: data.sideEffects || '',
-    drugInteractions: data.drugInteractions || '',
+    drugInteractions: resolvedDrugInteractions || '',
     indications: data.indications || '',
     ConsumerInformationAndDisclaimer: resolvedConsumerInformationAndDisclaimer || '',
     category: data.category || '',
@@ -665,7 +666,8 @@ const applyMedicineUpdates = (medicine, data, images = null, healthCategoryData 
   const resolvedPrecautions = resolveTextWithAlias(data.precautions, data.precaution);
   if (resolvedPrecautions !== undefined) medicine.precautions = resolvedPrecautions;
   if (data.sideEffects !== undefined) medicine.sideEffects = data.sideEffects;
-  if (data.drugInteractions !== undefined) medicine.drugInteractions = data.drugInteractions;
+  const resolvedDrugInteractions = resolveTextWithAlias(data.drugInteractions, data.drugInteraction);
+  if (resolvedDrugInteractions !== undefined) medicine.drugInteractions = resolvedDrugInteractions;
   if (data.indications !== undefined) medicine.indications = data.indications;
   const resolvedConsumerInformationAndDisclaimer = resolveTextWithAlias(
     data.ConsumerInformationAndDisclaimer,
