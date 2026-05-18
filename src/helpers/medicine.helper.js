@@ -577,9 +577,13 @@ const buildMedicineData = (data, images, healthCategoryData = {}) => {
   const resolvedPrecautions = resolveTextWithAlias(data.precautions, data.precaution);
   const resolvedDrugInteractions = resolveTextWithAlias(data.drugInteractions, data.drugInteraction);
   const parsedSalePrice = data.salePrice !== undefined ? parseFloat(data.salePrice) : undefined;
-  const parsedOriginalPrice = data.originalPrice !== undefined
-    ? parseFloat(data.originalPrice)
-    : parsedSalePrice;
+  const parsedOriginalPrice = data.originalPrice !== undefined ? parseFloat(data.originalPrice) : undefined;
+  const resolvedSalePrice = Number.isFinite(parsedSalePrice)
+    ? parsedSalePrice
+    : (Number.isFinite(parsedOriginalPrice) ? parsedOriginalPrice : 0);
+  const resolvedOriginalPrice = Number.isFinite(parsedOriginalPrice)
+    ? parsedOriginalPrice
+    : resolvedSalePrice;
   const resolvedConsumerInformationAndDisclaimer = resolveTextWithAlias(
     data.ConsumerInformationAndDisclaimer,
     data.consumerInformationAndDisclaimer
@@ -588,8 +592,8 @@ const buildMedicineData = (data, images, healthCategoryData = {}) => {
   const medicineData = {
     productName: data.productName,
     brand: data.brand,
-    originalPrice: parsedOriginalPrice,
-    salePrice: parsedSalePrice,
+    originalPrice: resolvedOriginalPrice,
+    salePrice: resolvedSalePrice,
     images: images,
     usage: normalizeUsage(parseIfString(data.usage)) || [],
     description: data.description || '',
@@ -635,8 +639,18 @@ const applyMedicineUpdates = (medicine, data, images = null, healthCategoryData 
   // Basic fields
   if (data.productName !== undefined) medicine.productName = data.productName;
   if (data.brand !== undefined) medicine.brand = data.brand;
-  if (data.originalPrice !== undefined) medicine.originalPrice = parseFloat(data.originalPrice);
-  if (data.salePrice !== undefined) medicine.salePrice = parseFloat(data.salePrice);
+  if (data.originalPrice !== undefined) {
+    const parsedOriginalPrice = parseFloat(data.originalPrice);
+    if (Number.isFinite(parsedOriginalPrice)) {
+      medicine.originalPrice = parsedOriginalPrice;
+    }
+  }
+  if (data.salePrice !== undefined) {
+    const parsedSalePrice = parseFloat(data.salePrice);
+    if (Number.isFinite(parsedSalePrice)) {
+      medicine.salePrice = parsedSalePrice;
+    }
+  }
   if (data.description !== undefined) medicine.description = data.description;
   if (data.howItWorks !== undefined) medicine.howItWorks = data.howItWorks;
   if (data.category !== undefined) medicine.category = data.category;

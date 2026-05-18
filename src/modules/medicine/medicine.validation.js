@@ -177,18 +177,6 @@ exports.addMedicineValidation = [
     .withMessage('Brand must be a string')
     .trim(),
   
-  body('originalPrice')
-    .optional()
-    .isFloat({ min: 0 })
-    .withMessage('Original price must be a positive number'),
-  
-  body('salePrice')
-    .if(requiredOnCreateOrPresentOnUpdate)
-    .notEmpty()
-    .withMessage('Sale price is required')
-    .isFloat({ min: 0 })
-    .withMessage('Sale price must be a positive number'),
-
     body('rating')
     .if(requiredOnCreateOrPresentOnUpdate)
     .notEmpty()
