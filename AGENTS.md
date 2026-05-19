@@ -1,13 +1,13 @@
 <claude-mem-context>
 # Memory Context
 
-# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-05-18 6:51pm GMT+5:30
+# [Mr-Telerxs-N-Backend-HW_APIs_Integration] recent context, 2026-05-19 5:21pm GMT+5:30
 
 Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision 🚨security_alert 🔐security_note
 Format: ID TIME TYPE TITLE
 Fetch details: get_observations([IDs]) | Search: mem-search skill
 
-Stats: 50 obs (19,713t read) | 195,349t work | 90% savings
+Stats: 50 obs (19,974t read) | 307,386t work | 94% savings
 
 ### May 5, 2026
 S57 Explain isActive flag behavior and fix options for 409 conflict on health category PUT update (May 5 at 4:30 PM)
@@ -21,57 +21,58 @@ S65 Healthware API order tracking flow after prescription order creation — how
 S66 Simulating tracking ID, shipment ID, and address in the Healthwarehouse test environment (May 7 at 12:42 AM)
 S67 Healthware API Order Tracking Flow — How is the order tracked after doctor creates prescription order on HW side? (May 7 at 9:59 AM)
 S68 Healthware API Order Tracking Flow — Full investigation of how orders are tracked after doctor prescription creation, including status transitions, shipment data, and webhook architecture (May 7 at 10:06 AM)
-679 6:25p 🔵 Production Vercel API Returns 200 but Lacks deliveryTimeline — Changes Not Yet Deployed
-680 " 🔵 updateTestOrderJourney Writes trackingNumber to Order Document — Source of TESTTRACK Artifact
-681 " 🔴 mapHWStatusToLocalStatus Now Protects Terminal Local Statuses from Being Overwritten
-682 6:26p ✅ Full Session Changeset Summary — Delivery Timeline Feature Complete Across 4 Files
-683 " ✅ HW_ORDER_JOURNEY_TESTING.md Updated to Document deliveryTimeline and tracking_events Fields
-684 " ✅ Delivery Timeline Feature Committed to main Branch
-685 " 🔵 Final Integration Verification — All deliveryTimeline Touchpoints Confirmed in Source, Changes Still Uncommitted
-686 6:31p 🔵 No Orders in "Delivered" Status — All Sit at "Confirmed"
-687 " 🔵 Order 69f9c8d0a2148e8e8122903d Has Conflicting Delivered/Confirmed State
-688 6:35p 🔵 Postman Collection & Frontend Flow Documentation Review
-689 " 🔵 TeleRxs Postman Collection Structure Enumerated
-690 " 🔵 HW_ORDER_JOURNEY_TESTING.md Is the Primary Frontend Handoff Document
-691 " 🔵 Frontend_changes.md Does Not Exist
-692 6:36p 🔵 Order Tracking & Detail API Endpoint URL Patterns Confirmed
-693 " 🔵 Postman Collection Variables: base_url Points to Render Deployment, Auth Tokens Empty
-694 6:37p 🟣 Added 'delivered' and 'refunded' Status Support to HW Test Journey Endpoint
-695 " 🟣 Postman Collection Updated: 11-Step HW Journey Testing Folder with Delivered, Refunded & Verification Requests
-696 6:38p 🟣 Created FE_HEALTHWAREHOUSE_ORDER_FLOW.md — Frontend Handoff Documentation
-697 " ✅ HW_ORDER_JOURNEY_TESTING.md Updated to Match New Backend Statuses and Cross-Reference FE Doc
-698 " 🔵 Git Status Confirms All Changed Files Before Commit
-699 6:39p 🔵 Session Changeset: 367 Insertions Across 4 Files; order.service.js, helper, and Model Unchanged
-700 " 🔵 deliveryTimeline Built by buildDeliveryTimeline() in order.service.js; 'delivered' and 'refunded' Already in terminalLocalStatuses
 ### May 18, 2026
-1455 4:51p 🔴 Removed salePrice and originalPrice Validation from Medicines API
-1456 " 🔵 salePrice/originalPrice Validation Located in medicine.validation.js
-1457 4:52p 🔵 Medicine Model Has salePrice required: true at Schema Level
-1458 " 🔵 Discount Calculation Is Safe When salePrice/originalPrice Are Absent
-1459 " 🔴 rating Field Also Uses requiredOnCreateOrPresentOnUpdate in addMedicineValidation
-1460 " 🔵 No Uncommitted Changes to Validation or Model Files Before Fix
-1461 " 🔴 Removed salePrice and originalPrice Validators from addMedicineValidation
-1462 4:53p 🔴 Fixed Price Field Fallback Logic in buildMedicineData and applyMedicineUpdates
-1463 " 🔴 salePrice/originalPrice Validation Removal Confirmed Applied and Syntax-Valid
-1464 " 🔴 Final State Verified: Two Files Modified, Price Validation Fully Removed
-1476 5:05p 🔵 Footer Address API Rejects "address-section" as Section Name
-1477 " 🔵 Footer API Valid Section Names Are Short Kebab-Case, Not "-section" Suffixed
-1478 5:06p 🔵 Footer Model Schema: One Document Per Section, Polymorphic Fields, Commented-Out Auth Check
-1479 " 🔴 setSectionParam Middleware Now Overrides req.body.section to Prevent Enum Validation Failure
-1502 6:23p 🔵 Footer Address API Returns Incomplete Address Data
-1503 " 🔵 Footer Helper Structure Traced in Mr-Telerxs Backend
-1504 6:24p 🔵 Footer Address Fix Path: Use updateFooterSectionBySection via PUT/PATCH
-1505 " 🔵 Footer Model Schema Has Hardcoded Default: address.country = "United States"
-1506 6:41p 🔵 Footer Helper Section Query Functions Inspected for Incomplete Response Bug
-1507 " 🔵 Footer Model Schema Contains Rich Nested Contact, Address, and Social Media Fields
-1508 6:43p 🔵 MongoDB Atlas Connection Confirmed for telerxs_db Database
-1509 6:44p 🔵 Root Cause Confirmed: Address Section Stuck in Draft Status, Missing Data in DB
-1510 6:50p 🔵 Footer Module Route Architecture in Mr-Telerxs-N-Backend
-1511 " 🔵 Footer Service Layer Uses Thin Delegation Pattern
-1512 " 🔵 Footer Helper Centralizes All Optimized MongoDB Query Logic
-1513 " 🟣 GET /footer/full Endpoint Returns All Sections as List + Section-Keyed Map
-1514 " 🔵 Live Smoke Test of getFullFooter Fails Due to Unregistered User Mongoose Model
+1514 6:50p 🔵 Live Smoke Test of getFullFooter Fails Due to Unregistered User Mongoose Model
 1515 6:51p 🔵 getFullFooter Smoke Test Passed Against Live Database — 14 Sections Returned
+1516 6:57p 🔵 TeleRxs Footer API — Full Structure Documented
+1517 " 🔵 Footer `address` Section Exists in DB but Has `draft` Status
+### May 19, 2026
+1626 3:28p 🔵 Blog Module API Files Discovered in Mr-Telerxs Backend
+1627 " 🔵 Blog Module Has Full Admin CRUD API Including Soft and Hard Delete
+1628 " 🔵 Footer "Blogs" Section Is a Separate CMS Entity from the Blog Posts Themselves
+1629 3:29p 🔵 Blog Model Schema: Three-State Status, Auto-Slug, View Counter, and SEO Fields
+1630 " 🔵 Blog Service: Soft Delete Archives, Hard Delete Uses findByIdAndDelete, saveAsDraft Clears publishedAt
+1631 " 🔵 Footer "Blogs" Section Stores blogLinks Array (Title/URL/Category/Tags), Not Blog Post References
+1632 " 🔵 API Base URL is /api/v1 — All Blog and Footer Endpoints Prefixed Accordingly
+1633 " 🔵 Footer Helper: findByNameAndUpdatePopulate Strips Section Field to Prevent Section Name Mutation
+1634 3:31p 🔵 Upload Middleware Uses Memory Storage in Production (Vercel) — Blog Images Not Persisted to Disk
+1635 " 🔵 Blog Validation Accepts JSON Strings for Array Fields to Support multipart/form-data
+1636 3:59p 🔵 Mr-Telerxs-N-Backend-HW_APIs_Integration Project Structure
+1637 " 🔵 Footer Sections API Architecture Fully Mapped
+1638 4:00p 🔵 Footer Model Schema - Section-Specific Data Fields
+1639 " 🔵 Admin Middleware Role Check Is Commented Out — Any Authenticated User Can Edit Footer
+1640 " 🔵 Live Footer Section Data State — 8 Published, 6 Draft
+1641 4:05p ⚖️ Planned Migration: Single HTML String → Structured Section Objects for Static Pages
+1642 4:08p ⚖️ Footer Section API Structured Content Migration Architecture Decisions
+1643 4:14p ⚖️ Footer Content Block Migration Architecture Decisions
+1644 " ⚖️ Footer contentBlocks Feature Flag Scope and Backfill Strategy Decided
+1645 4:15p ⚖️ contentBlocks Identity Model: Stable blockId + Explicit Order Field
+1646 4:20p ⚖️ Footer Page Content Migration: Dual-Format API with Feature Flag Strategy
+1647 " 🟣 Non-Destructive Backfill Script for contentBlocks Seeding
+1648 " 🟣 contentBlocks Validation Rules and API Contract
+1649 " 🔵 Telerxs Backend Project Structure and Tech Stack Identified
+1650 " 🔵 blockId Generation Pattern: Project Uses mongoose.Types.ObjectId Exclusively
+1651 4:21p 🟣 Feature Flag Module Created: src/config/footerContentBlocks.js
+1652 4:22p 🟣 Footer.model.js Extended with contentBlocks Array Field
+1653 " 🟣 Footer Validation Extended with contentBlocks Shape Validation
+1654 " 🔵 Footer Service is a Thin Wrapper — Business Logic Lives in footer.helper.js
+1655 4:23p 🟣 Footer Service Implements Full contentBlocks Read/Write Policy Layer
+1656 " 🟣 Backfill Script Created: scripts/backfill-footer-content-blocks.js
+1657 4:24p ✅ package.json Gains Two npm Scripts for Backfill Execution
+1658 " 🔄 updateFooterSection Optimized: DB Lookup for Section Name Skipped When No contentBlocks in Payload
+1659 " 🔵 Backfill Dry Run Confirms All 4 Target Footer Sections Have Legacy Content and Zero Existing contentBlocks
+1660 " 🔵 Complete Implementation Audit Confirms contentBlocks Contained to Exactly 4 Files Plus Backfill Script
+1661 4:25p 🔵 Footer Service Integration Test Fails: User Model Must Be Pre-Registered for populate() to Work
+1662 5:00p 🔵 FOOTER_CONTENT_BLOCKS_ENABLED not set in .env
+1663 5:01p 🔵 Footer content blocks feature work scope identified via git status
+1664 " ✅ FOOTER_CONTENT_BLOCKS_ENABLED=true added to .env
+1665 " 🟣 Footer content blocks backfill script ran successfully on all 4 sections
+1666 " 🔵 Inline node -e script failed due to shell escaping truncation in Node v24
+1667 " 🔵 MongoDB footer documents confirmed migrated to content blocks format
+1668 " 🟣 Footer service getFooterSectionBySection returns contentBlocks when flag is enabled
+1669 5:04p 🔵 Postman collection variables and auth config for TeleRxs HW APIs
+1670 " 🔵 Footer admin API in Postman collection targets localhost:5000, not production
+1671 5:06p 🟣 New Postman collection generated for Footer Content Blocks APIs
 
-Access 195k tokens of past work via get_observations([IDs]) or mem-search skill.
+Access 307k tokens of past work via get_observations([IDs]) or mem-search skill.
 </claude-mem-context>

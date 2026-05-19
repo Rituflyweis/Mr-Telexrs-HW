@@ -1,0 +1,309 @@
+{
+  "info": {
+    "_postman_id": "c5b4f16f-2f6f-4f9a-909a-8a5153a90f1b",
+    "name": "TeleRxs Footer Content Blocks APIs",
+    "description": "Collection for Footer structured content blocks migration.\n\nImportant:\n- Requires `FOOTER_CONTENT_BLOCKS_ENABLED=true` on backend.\n- Uses existing endpoints under `/api/v1/admin/footer`.\n- `contentBlocks` works only for: about-us, how-works, leadership, careers.\n- Requires admin/sub-admin token in `admin_token` variable.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{admin_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5001/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "section",
+      "value": "about-us",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Read Footer (Structured + Legacy)",
+      "item": [
+        {
+          "name": "GET Full Footer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/admin/footer/full",
+            "description": "Returns full footer payload. With flag ON and target sections, includes `contentBlocks` along with legacy fields."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "GET About (route alias)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/admin/footer/about"
+          },
+          "response": []
+        },
+        {
+          "name": "GET How Works (route alias)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/admin/footer/how-works"
+          },
+          "response": []
+        },
+        {
+          "name": "GET Leadership (route alias)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/admin/footer/leadership"
+          },
+          "response": []
+        },
+        {
+          "name": "GET Careers (route alias)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/admin/footer/careers"
+          },
+          "response": []
+        },
+        {
+          "name": "GET By Canonical Section Name",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/admin/footer/section/{{section}}",
+            "description": "Set `section` variable to one of: about-us, how-works, leadership, careers."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 - Update Structured Blocks (Full Replace)",
+      "item": [
+        {
+          "name": "PUT About with contentBlocks",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"About Us\",\n  \"status\": \"draft\",\n  \"order\": 1,\n  \"contentBlocks\": [\n    {\n      \"blockId\": \"about-intro-001\",\n      \"order\": 0,\n      \"title\": \"Who We Are\",\n      \"subTitle\": \"Modern telehealth and pharmacy\",\n      \"listContent\": [\n        \"Licensed healthcare providers\",\n        \"Prescription delivery support\",\n        \"Affordable treatment access\"\n      ],\n      \"content\": \"TeleRxs helps patients access care and medications faster, without traditional visit friction.\",\n      \"images\": [\n        {\n          \"url\": \"https://cdn.example.com/telerxs/about-hero.jpg\",\n          \"alt\": \"TeleRxs provider team\",\n          \"caption\": \"Our clinical team\"\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": "{{base_url}}/admin/footer/about"
+          },
+          "response": []
+        },
+        {
+          "name": "PUT How Works with contentBlocks",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"How TeleRxs Works\",\n  \"status\": \"draft\",\n  \"order\": 2,\n  \"contentBlocks\": [\n    {\n      \"blockId\": \"how-steps-001\",\n      \"order\": 0,\n      \"title\": \"Simple 3-step journey\",\n      \"subTitle\": \"From consultation to delivery\",\n      \"listContent\": [\n        \"Select treatment and submit intake\",\n        \"Doctor reviews and prescribes\",\n        \"Medication delivered to your address\"\n      ],\n      \"content\": \"The platform is designed to reduce waiting time and simplify medication access.\",\n      \"images\": [\n        {\n          \"url\": \"https://cdn.example.com/telerxs/how-works-steps.jpg\",\n          \"alt\": \"How it works illustration\",\n          \"caption\": \"Patient care workflow\"\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": "{{base_url}}/admin/footer/how-works"
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Leadership with contentBlocks",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Leadership\",\n  \"status\": \"draft\",\n  \"order\": 3,\n  \"contentBlocks\": [\n    {\n      \"blockId\": \"leaders-001\",\n      \"order\": 0,\n      \"title\": \"Leadership Team\",\n      \"subTitle\": \"Clinical and operational excellence\",\n      \"listContent\": [\n        \"Medical leadership\",\n        \"Pharmacy operations leadership\",\n        \"Technology and patient experience leadership\"\n      ],\n      \"content\": \"Our leadership team combines healthcare, pharmacy, and technology expertise.\",\n      \"images\": [\n        {\n          \"url\": \"https://cdn.example.com/telerxs/leadership-team.jpg\",\n          \"alt\": \"Leadership team\",\n          \"caption\": \"TeleRxs leaders\"\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": "{{base_url}}/admin/footer/leadership"
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Careers with contentBlocks",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Careers\",\n  \"status\": \"draft\",\n  \"order\": 4,\n  \"contentBlocks\": [\n    {\n      \"blockId\": \"careers-001\",\n      \"order\": 0,\n      \"title\": \"Join Our Team\",\n      \"subTitle\": \"Build the future of accessible care\",\n      \"listContent\": [\n        \"Remote-first opportunities\",\n        \"Mission-driven healthcare impact\",\n        \"Cross-functional collaboration\"\n      ],\n      \"content\": \"We are hiring across product, operations, clinical, and support teams.\",\n      \"images\": [\n        {\n          \"url\": \"https://cdn.example.com/telerxs/careers.jpg\",\n          \"alt\": \"Team collaborating\",\n          \"caption\": \"Life at TeleRxs\"\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": "{{base_url}}/admin/footer/careers"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 - Publish / Draft",
+      "item": [
+        {
+          "name": "PUT About Publish",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": "{{base_url}}/admin/footer/about/publish"
+          },
+          "response": []
+        },
+        {
+          "name": "PUT About Draft",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": "{{base_url}}/admin/footer/about/draft"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 - Validation Negative Tests",
+      "item": [
+        {
+          "name": "PUT About - Duplicate blockId (Expect 400)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"About Us\",\n  \"contentBlocks\": [\n    {\n      \"blockId\": \"dup-001\",\n      \"order\": 0,\n      \"title\": \"Block A\",\n      \"subTitle\": \"\",\n      \"listContent\": [],\n      \"content\": \"A\",\n      \"images\": []\n    },\n    {\n      \"blockId\": \"dup-001\",\n      \"order\": 1,\n      \"title\": \"Block B\",\n      \"subTitle\": \"\",\n      \"listContent\": [],\n      \"content\": \"B\",\n      \"images\": []\n    }\n  ]\n}"
+            },
+            "url": "{{base_url}}/admin/footer/about"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "PUT About - Invalid order (Expect 400)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"About Us\",\n  \"contentBlocks\": [\n    {\n      \"blockId\": \"order-001\",\n      \"order\": -1,\n      \"title\": \"Invalid Order Block\",\n      \"subTitle\": \"\",\n      \"listContent\": [],\n      \"content\": \"Invalid order test\",\n      \"images\": []\n    }\n  ]\n}"
+            },
+            "url": "{{base_url}}/admin/footer/about"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "PUT About - Missing image url (Expect 400)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"About Us\",\n  \"contentBlocks\": [\n    {\n      \"blockId\": \"img-001\",\n      \"order\": 0,\n      \"title\": \"Image Validation Block\",\n      \"subTitle\": \"\",\n      \"listContent\": [],\n      \"content\": \"Image validation test\",\n      \"images\": [\n        {\n          \"alt\": \"Missing URL\"\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": "{{base_url}}/admin/footer/about"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    }
+  ]
+}

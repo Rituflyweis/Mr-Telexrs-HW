@@ -1,4 +1,87 @@
 const { body, query, param } = require('express-validator');
+const { canUseContentBlocksForSection } = require('../../config/footerContentBlocks');
+
+const resolveSectionFromRequest = (req) => {
+  return req?.params?.section || req?.body?.section;
+};
+
+const shouldValidateContentBlocks = (req) => {
+  return canUseContentBlocksForSection(resolveSectionFromRequest(req));
+};
+
+const validateContentBlocksShape = (contentBlocks) => {
+  if (!Array.isArray(contentBlocks)) {
+    throw new Error('contentBlocks must be an array');
+  }
+
+  const blockIds = new Set();
+
+  contentBlocks.forEach((block, blockIndex) => {
+    if (!block || typeof block !== 'object' || Array.isArray(block)) {
+      throw new Error(`contentBlocks[${blockIndex}] must be an object`);
+    }
+
+    if (typeof block.blockId !== 'string' || block.blockId.trim().length === 0) {
+      throw new Error(`contentBlocks[${blockIndex}].blockId is required`);
+    }
+
+    const normalizedBlockId = block.blockId.trim();
+    if (blockIds.has(normalizedBlockId)) {
+      throw new Error(`Duplicate blockId '${normalizedBlockId}' in contentBlocks`);
+    }
+    blockIds.add(normalizedBlockId);
+
+    if (!Number.isInteger(block.order) || block.order < 0) {
+      throw new Error(`contentBlocks[${blockIndex}].order must be a non-negative integer`);
+    }
+
+    if (block.title !== undefined && typeof block.title !== 'string') {
+      throw new Error(`contentBlocks[${blockIndex}].title must be a string`);
+    }
+
+    if (block.subTitle !== undefined && typeof block.subTitle !== 'string') {
+      throw new Error(`contentBlocks[${blockIndex}].subTitle must be a string`);
+    }
+
+    if (block.content !== undefined && typeof block.content !== 'string') {
+      throw new Error(`contentBlocks[${blockIndex}].content must be a string`);
+    }
+
+    if (!Array.isArray(block.listContent)) {
+      throw new Error(`contentBlocks[${blockIndex}].listContent must be an array`);
+    }
+
+    block.listContent.forEach((item, listIndex) => {
+      if (typeof item !== 'string') {
+        throw new Error(`contentBlocks[${blockIndex}].listContent[${listIndex}] must be a string`);
+      }
+    });
+
+    if (!Array.isArray(block.images)) {
+      throw new Error(`contentBlocks[${blockIndex}].images must be an array`);
+    }
+
+    block.images.forEach((image, imageIndex) => {
+      if (!image || typeof image !== 'object' || Array.isArray(image)) {
+        throw new Error(`contentBlocks[${blockIndex}].images[${imageIndex}] must be an object`);
+      }
+
+      if (typeof image.url !== 'string' || image.url.trim().length === 0) {
+        throw new Error(`contentBlocks[${blockIndex}].images[${imageIndex}].url is required`);
+      }
+
+      if (image.alt !== undefined && typeof image.alt !== 'string') {
+        throw new Error(`contentBlocks[${blockIndex}].images[${imageIndex}].alt must be a string`);
+      }
+
+      if (image.caption !== undefined && typeof image.caption !== 'string') {
+        throw new Error(`contentBlocks[${blockIndex}].images[${imageIndex}].caption must be a string`);
+      }
+    });
+  });
+
+  return true;
+};
 
 // Get all footer sections validation
 exports.getAllFooterSectionsValidation = [
@@ -65,6 +148,12 @@ exports.createFooterSectionValidation = [
     .trim()
     .isLength({ max: 10000 })
     .withMessage('Content must not exceed 10000 characters'),
+  body('contentBlocks')
+    .optional()
+    .custom((value, { req }) => {
+      if (!shouldValidateContentBlocks(req)) return true;
+      return validateContentBlocksShape(value);
+    }),
   body('media')
     .optional()
     .isArray()
@@ -227,6 +316,12 @@ exports.updateFooterSectionValidation = [
     .trim()
     .isLength({ max: 10000 })
     .withMessage('Content must not exceed 10000 characters'),
+  body('contentBlocks')
+    .optional()
+    .custom((value, { req }) => {
+      if (!shouldValidateContentBlocks(req)) return true;
+      return validateContentBlocksShape(value);
+    }),
   body('media')
     .optional()
     .isArray()
@@ -327,4 +422,3 @@ exports.sectionNameValidation = [
     ])
     .withMessage('Invalid section name')
 ];
-

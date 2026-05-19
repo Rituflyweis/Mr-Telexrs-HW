@@ -4,7 +4,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "footer:content-blocks:backfill:dry": "node scripts/backfill-footer-content-blocks.js --dry-run",
+    "footer:content-blocks:backfill": "node scripts/backfill-footer-content-blocks.js --apply"
   },
   "keywords": [],
   "author": "",

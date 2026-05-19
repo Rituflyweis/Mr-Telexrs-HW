@@ -56,6 +56,51 @@ const footerSchema = new mongoose.Schema(
       alt: String,
       caption: String
     }],
+
+    // ========== STRUCTURED PAGE CONTENT BLOCKS ==========
+    // Used for: about-us, how-works, leadership, careers (flag-gated in service layer)
+    contentBlocks: [{
+      _id: false,
+      blockId: {
+        type: String,
+        trim: true
+      },
+      order: {
+        type: Number,
+        default: 0
+      },
+      title: {
+        type: String,
+        trim: true
+      },
+      subTitle: {
+        type: String,
+        trim: true
+      },
+      listContent: [{
+        type: String,
+        trim: true
+      }],
+      content: {
+        type: String,
+        trim: true
+      },
+      images: [{
+        _id: false,
+        url: {
+          type: String,
+          trim: true
+        },
+        alt: {
+          type: String,
+          trim: true
+        },
+        caption: {
+          type: String,
+          trim: true
+        }
+      }]
+    }],
     
     // ========== FAQ SECTION (Multiple FAQs) ==========
     faqs: [{
@@ -170,4 +215,3 @@ footerSchema.index({ section: 1, status: 1 });
 footerSchema.index({ order: 1 });
 
 module.exports = mongoose.model('Footer', footerSchema);
-
